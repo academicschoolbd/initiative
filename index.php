@@ -257,10 +257,117 @@ $o = function (string $key, string $default = '') use ($old): string {
         .bd-hp { position:absolute; left:-9999px; top:-9999px; width:1px; height:1px;
                  opacity:0; pointer-events:none; }
 
+        /* -----------------------------------------------------------
+           Sponsor splash modal
+           ----------------------------------------------------------- */
+        .bd-sponsor-overlay { position:fixed; inset:0; z-index:9999;
+                              background:rgba(15,23,42,.55);
+                              display:flex; align-items:center; justify-content:center;
+                              padding:16px; opacity:0; pointer-events:none;
+                              transition:opacity .25s ease; }
+        .bd-sponsor-overlay.is-open { opacity:1; pointer-events:auto; }
+        .bd-sponsor-card { position:relative; background:#fff; border-radius:16px;
+                           max-width:440px; width:100%;
+                           padding:38px 28px 26px; overflow:hidden;
+                           box-shadow:0 25px 50px -12px rgba(0,0,0,.25);
+                           transform:scale(.94); opacity:0;
+                           transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s ease; }
+        .bd-sponsor-overlay.is-open .bd-sponsor-card { transform:scale(1); opacity:1; }
+        .bd-sponsor-progress { position:absolute; top:0; left:0; right:0; height:3px;
+                               background:#e2e8f0; }
+        .bd-sponsor-progress-bar { height:100%; background:var(--brand); width:100%;
+                                   transform-origin:left center; }
+        .bd-sponsor-overlay.is-open .bd-sponsor-progress-bar {
+            animation: bdSponsorTick 6s linear forwards;
+        }
+        @keyframes bdSponsorTick { from { transform:scaleX(1); }
+                                   to   { transform:scaleX(0); } }
+        .bd-sponsor-close { position:absolute; top:10px; right:10px;
+                            width:30px; height:30px; border-radius:50%;
+                            background:#f1f5f9; border:none;
+                            color:#475569; font-size:1rem; font-weight:700;
+                            cursor:pointer;
+                            display:flex; align-items:center; justify-content:center;
+                            transition:.15s; line-height:1; }
+        .bd-sponsor-close:hover { background:#e2e8f0; color:#0f172a; }
+        .bd-sponsor-eyebrow { text-align:center; color:var(--muted);
+                              font-size:.78rem; margin:0 0 10px;
+                              letter-spacing:.08em; text-transform:uppercase;
+                              font-weight:600; }
+        .bd-sponsor-title { text-align:center; font-family:'Tiro Bangla',serif;
+                            font-size:1.3rem; line-height:1.4; margin:0;
+                            color:var(--fg); }
+        .bd-sponsor-title .amp { color:var(--brand); font-weight:400; padding:0 4px; }
+        .bd-sponsor-divider { width:36px; height:2px; background:var(--brand);
+                              border-radius:1px; margin:18px auto; }
+        .bd-sponsor-credit { text-align:center; font-size:.92rem; color:#475569;
+                             margin:0 0 18px; line-height:1.55; }
+        .bd-sponsor-credit strong { color:var(--fg); }
+        .bd-sponsor-whatsapp { display:inline-flex; align-items:center; gap:8px;
+                               background:#25d366; color:#fff;
+                               padding:10px 22px; border-radius:8px;
+                               text-decoration:none; font-weight:600;
+                               font-size:.9rem; font-family:inherit;
+                               border:none; cursor:pointer;
+                               transition:.15s; }
+        .bd-sponsor-whatsapp:hover { background:#1da851; }
+        .bd-sponsor-whatsapp svg   { width:18px; height:18px; flex:0 0 18px; }
+        .bd-sponsor-whatsapp-row { display:flex; justify-content:center; }
+
         .bd-footer-link { text-align:center; margin-top:22px; font-size:.82rem; color:var(--muted); }
     </style>
 </head>
 <body>
+
+<?php if (!empty($CONFIG['sponsor_dialog_enabled'])):
+    $waDigits = preg_replace('/\D+/', '', (string) ($CONFIG['whatsapp_contact'] ?? ''));
+?>
+<!-- Sponsor splash dialog: auto-closes after 6 seconds. -->
+<div class="bd-sponsor-overlay" id="bd-sponsor-modal"
+     role="dialog" aria-modal="true" aria-labelledby="bd-sponsor-title"
+     data-bd-sponsor>
+    <div class="bd-sponsor-card">
+        <div class="bd-sponsor-progress" aria-hidden="true">
+            <div class="bd-sponsor-progress-bar"></div>
+        </div>
+        <button type="button" class="bd-sponsor-close" data-bd-sponsor-close
+                aria-label="Close sponsor dialog">&times;</button>
+
+        <p class="bd-sponsor-eyebrow" lang="bn">স্পনসর্ড বাই &nbsp;·&nbsp; Sponsored by</p>
+        <h3 class="bd-sponsor-title" id="bd-sponsor-title">
+            Smartschool.bd <span class="amp">&amp;</span> Institution.bd
+        </h3>
+
+        <div class="bd-sponsor-divider" aria-hidden="true"></div>
+
+        <p class="bd-sponsor-credit">
+            Initiative taken by <strong>Abu Taher</strong>
+        </p>
+
+        <div class="bd-sponsor-whatsapp-row">
+            <?php if ($waDigits !== ''): ?>
+                <a class="bd-sponsor-whatsapp"
+                   href="https://wa.me/<?= e($waDigits) ?>"
+                   target="_blank" rel="noopener noreferrer"
+                   aria-label="Contact on WhatsApp">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.81 11.81 0 0 1 8.413 3.488 11.83 11.83 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892h-.005a11.9 11.9 0 0 1-5.683-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885a9.86 9.86 0 0 0-2.892-7.001 9.825 9.825 0 0 0-6.99-2.901c-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 0 0 1.516 5.26l.235.374-1 3.648 3.74-.971zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.463 1.065 2.876 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
+                    </svg>
+                    <span>WhatsApp-এ যোগাযোগ &nbsp;·&nbsp; Contact</span>
+                </a>
+            <?php else: ?>
+                <span class="bd-sponsor-whatsapp" style="background:#94a3b8; cursor:default;"
+                      role="img" aria-label="WhatsApp icon (number not configured)">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.81 11.81 0 0 1 8.413 3.488 11.83 11.83 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892h-.005a11.9 11.9 0 0 1-5.683-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885a9.86 9.86 0 0 0-2.892-7.001 9.825 9.825 0 0 0-6.99-2.901c-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 0 0 1.516 5.26l.235.374-1 3.648 3.74-.971zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.463 1.065 2.876 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
+                    </svg>
+                    <span>WhatsApp Contact</span>
+                </span>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="bd-shell">
 
@@ -791,5 +898,48 @@ $o = function (string $key, string $default = '') use ($old): string {
     <?php endif; ?>
 })();
 </script>
+
+<?php if (!empty($CONFIG['sponsor_dialog_enabled'])): ?>
+<script>
+(function () {
+    'use strict';
+    var overlay = document.getElementById('bd-sponsor-modal');
+    if (!overlay) return;
+
+    var autoCloseTimer = null;
+    function close() {
+        overlay.classList.remove('is-open');
+        if (autoCloseTimer) { clearTimeout(autoCloseTimer); autoCloseTimer = null; }
+    }
+    function open() {
+        overlay.classList.add('is-open');
+        autoCloseTimer = setTimeout(close, 6000);
+    }
+
+    // Show shortly after first paint so the CSS transition is visible.
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { setTimeout(open, 200); });
+    } else {
+        setTimeout(open, 200);
+    }
+
+    // Manual close button.
+    overlay.querySelectorAll('[data-bd-sponsor-close]').forEach(function (btn) {
+        btn.addEventListener('click', close);
+    });
+
+    // Click-outside to dismiss.
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) { close(); }
+    });
+
+    // Escape key.
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('is-open')) { close(); }
+    });
+})();
+</script>
+<?php endif; ?>
+
 </body>
 </html>

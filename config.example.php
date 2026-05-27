@@ -32,6 +32,13 @@ return [
     'submission_cooldown_seconds' => 60,   // minimum seconds between submissions from same IP
     'force_https'                 => false, // true to redirect http -> https via PHP
 
+    // Sponsor splash dialog. Show "Sponsored by Smartschool.bd & Institution.bd"
+    // for 6 seconds when a visitor lands on the home page. Set whatsapp_contact
+    // to the +88-prefixed mobile number that should receive WhatsApp pings;
+    // leave empty to render the icon without a clickable wa.me link.
+    'sponsor_dialog_enabled' => true,
+    'whatsapp_contact'       => '+8801711000000',
+
     // Database
     'sqlite_path' => __DIR__ . '/database.sqlite',
 ];

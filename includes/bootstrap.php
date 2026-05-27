@@ -54,6 +54,8 @@ $CONFIG += [
     'quotas'                      => ['primary' => 3, 'madrasah' => 3, 'high_school' => 3],
     'submission_cooldown_seconds' => 60,
     'force_https'                 => false,
+    'sponsor_dialog_enabled'      => true,
+    'whatsapp_contact'            => '',
     'sqlite_path'                 => __DIR__ . '/../database.sqlite',
 ];
 
