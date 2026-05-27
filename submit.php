@@ -605,7 +605,10 @@ try {
 }
 
 $_SESSION['submission_success'] = [
-    'school'    => $school_name,
-    'subdomain' => $subdomain . '.smartschool.bd',
+    'school'           => $school_name,
+    'subdomain'        => $subdomain . '.smartschool.bd',
+    'owner_name'       => $owner_name,
+    'institution_type' => institution_label($institution_type),
+    'union_name'       => $union_name,
 ];
 redirect('/success.php');
