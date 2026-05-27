@@ -78,6 +78,57 @@ $ict_teacher_available = input('ict_teacher_available');
 $smart_school_reason   = input('smart_school_reason');
 $terms_accept     = !empty($_POST['terms_accept']);
 
+// New fields
+$eiin_number       = input('eiin_number');
+$mpo_status        = input('mpo_status');
+$establishment_year_raw = input('establishment_year');
+$school_phone      = input('school_phone');
+$school_email      = input('school_email');
+$school_website    = input('school_website');
+$division          = input('division');
+$district          = input('district');
+$upazila           = input('upazila');
+$union_ward        = input('union_ward');
+$village           = input('village');
+$postal_code       = input('postal_code');
+
+$num_buildings_raw   = input('num_buildings');
+$num_classrooms_raw  = input('num_classrooms');
+$has_computer_lab    = input('has_computer_lab');
+$has_science_lab     = input('has_science_lab');
+$has_library         = input('has_library');
+$has_playground      = input('has_playground');
+
+$total_students_boys_raw  = input('total_students_boys');
+$total_students_girls_raw = input('total_students_girls');
+
+$students_class_1_raw  = input('students_class_1');
+$students_class_2_raw  = input('students_class_2');
+$students_class_3_raw  = input('students_class_3');
+$students_class_4_raw  = input('students_class_4');
+$students_class_5_raw  = input('students_class_5');
+$students_class_6_raw  = input('students_class_6');
+$students_class_7_raw  = input('students_class_7');
+$students_class_8_raw  = input('students_class_8');
+$students_class_9_raw  = input('students_class_9');
+$students_class_10_raw = input('students_class_10');
+
+$male_teachers_raw      = input('male_teachers');
+$female_teachers_raw    = input('female_teachers');
+$trained_teachers_raw   = input('trained_teachers');
+$untrained_teachers_raw = input('untrained_teachers');
+
+$num_computers_raw          = input('num_computers');
+$has_internet               = input('has_internet');
+$internet_type              = input('internet_type');
+$num_projectors_raw         = input('num_projectors');
+$has_multimedia_classroom   = input('has_multimedia_classroom');
+
+$existing_software             = input('existing_software');
+$head_teacher_whatsapp_raw     = input('head_teacher_whatsapp');
+$managing_committee_chairman   = input('managing_committee_chairman');
+$managing_committee_phone_raw  = input('managing_committee_phone');
+
 // Length caps to prevent abusive payloads.
 $caps = [
     'school_name'         => 200,
@@ -88,6 +139,13 @@ $caps = [
     'notes'               => 2000,
     'owner_email'         => 254,
     'smart_school_reason' => 2000,
+    'school_phone'        => 20,
+    'school_email'        => 254,
+    'school_website'      => 200,
+    'village'             => 200,
+    'postal_code'         => 10,
+    'existing_software'   => 2000,
+    'managing_committee_chairman' => 150,
 ];
 foreach ($caps as $field => $max) {
     if (mb_strlen($$field) > $max) {
@@ -99,7 +157,7 @@ foreach ($caps as $field => $max) {
 // Validation
 // ---------------------------------------------------------------------
 $errors = [];
-$validTypes = ['primary', 'madrasah', 'high_school'];
+$validTypes = array_keys(institution_types());
 
 if (!in_array($institution_type, $validTypes, true)) {
     $errors[] = 'প্রতিষ্ঠানের ধরন নির্বাচন করা বাধ্যতামূলক।';
@@ -193,6 +251,217 @@ if (!$terms_accept) {
     $errors[] = 'শর্তাবলীতে সম্মতি প্রদান করা বাধ্যতামূলক।';
 }
 
+// ---------------------------------------------------------------------
+// Validation for NEW fields
+// ---------------------------------------------------------------------
+
+// MPO status - required
+if (!in_array($mpo_status, ['mpo', 'non_mpo', 'newly_nationalized'], true)) {
+    $errors[] = 'MPO স্ট্যাটাস নির্বাচন করা বাধ্যতামূলক।';
+}
+
+// Division, District, Upazila - required
+if ($division === '') {
+    $errors[] = 'বিভাগ নির্বাচন করা বাধ্যতামূলক।';
+}
+if ($district === '') {
+    $errors[] = 'জেলা নির্বাচন করা বাধ্যতামূলক।';
+}
+if ($upazila === '') {
+    $errors[] = 'উপজেলা নির্বাচন করা বাধ্যতামূলক।';
+}
+
+// has_internet - required
+if (!in_array($has_internet, ['yes', 'no'], true)) {
+    $errors[] = 'ইন্টারনেট সংযোগ আছে কিনা নির্বাচন করুন।';
+}
+
+// EIIN number - optional, if provided must be 4-8 digits
+if ($eiin_number !== '') {
+    if (!ctype_digit($eiin_number) || strlen($eiin_number) < 4 || strlen($eiin_number) > 8) {
+        $errors[] = 'EIIN নম্বর ৪-৮ ডিজিটের হতে হবে।';
+    }
+}
+
+// School email - optional, if provided must be valid
+if ($school_email !== '' && !filter_var($school_email, FILTER_VALIDATE_EMAIL)) {
+    $errors[] = 'প্রতিষ্ঠানের ইমেইল সঠিক নয়।';
+}
+
+// Establishment year - optional numeric
+$establishment_year = null;
+if ($establishment_year_raw !== '') {
+    if (!ctype_digit($establishment_year_raw) || strlen($establishment_year_raw) !== 4) {
+        $errors[] = 'প্রতিষ্ঠার সাল ৪ ডিজিটের হতে হবে।';
+    } elseif ((int) $establishment_year_raw < 1800 || (int) $establishment_year_raw > (int) date('Y')) {
+        $errors[] = 'প্রতিষ্ঠার সাল সঠিক নয়।';
+    } else {
+        $establishment_year = (int) $establishment_year_raw;
+    }
+}
+
+// Optional numeric fields with bounds
+$num_buildings = null;
+if ($num_buildings_raw !== '') {
+    if (!ctype_digit($num_buildings_raw) || (int) $num_buildings_raw > 100) {
+        $errors[] = 'ভবন সংখ্যা সঠিক নয়।';
+    } else {
+        $num_buildings = (int) $num_buildings_raw;
+    }
+}
+
+$num_classrooms = null;
+if ($num_classrooms_raw !== '') {
+    if (!ctype_digit($num_classrooms_raw) || (int) $num_classrooms_raw > 500) {
+        $errors[] = 'শ্রেণিকক্ষ সংখ্যা সঠিক নয়।';
+    } else {
+        $num_classrooms = (int) $num_classrooms_raw;
+    }
+}
+
+$total_students_boys = null;
+if ($total_students_boys_raw !== '') {
+    if (!ctype_digit($total_students_boys_raw) || (int) $total_students_boys_raw > 20000) {
+        $errors[] = 'ছাত্র সংখ্যা সঠিক নয়।';
+    } else {
+        $total_students_boys = (int) $total_students_boys_raw;
+    }
+}
+
+$total_students_girls = null;
+if ($total_students_girls_raw !== '') {
+    if (!ctype_digit($total_students_girls_raw) || (int) $total_students_girls_raw > 20000) {
+        $errors[] = 'ছাত্রী সংখ্যা সঠিক নয়।';
+    } else {
+        $total_students_girls = (int) $total_students_girls_raw;
+    }
+}
+
+// Per-class student counts
+$classFields = [];
+for ($i = 1; $i <= 10; $i++) {
+    $varName = 'students_class_' . $i;
+    $rawName = $varName . '_raw';
+    $$varName = null;
+    if ($$rawName !== '') {
+        if (!ctype_digit($$rawName) || (int) $$rawName > 5000) {
+            $errors[] = "শ্রেণি $i এর শিক্ষার্থী সংখ্যা সঠিক নয়।";
+        } else {
+            $$varName = (int) $$rawName;
+        }
+    }
+    $classFields[] = $varName;
+}
+
+$male_teachers = null;
+if ($male_teachers_raw !== '') {
+    if (!ctype_digit($male_teachers_raw) || (int) $male_teachers_raw > 1000) {
+        $errors[] = 'পুরুষ শিক্ষক সংখ্যা সঠিক নয়।';
+    } else {
+        $male_teachers = (int) $male_teachers_raw;
+    }
+}
+
+$female_teachers = null;
+if ($female_teachers_raw !== '') {
+    if (!ctype_digit($female_teachers_raw) || (int) $female_teachers_raw > 1000) {
+        $errors[] = 'মহিলা শিক্ষক সংখ্যা সঠিক নয়।';
+    } else {
+        $female_teachers = (int) $female_teachers_raw;
+    }
+}
+
+$trained_teachers = null;
+if ($trained_teachers_raw !== '') {
+    if (!ctype_digit($trained_teachers_raw) || (int) $trained_teachers_raw > 2000) {
+        $errors[] = 'প্রশিক্ষিত শিক্ষক সংখ্যা সঠিক নয়।';
+    } else {
+        $trained_teachers = (int) $trained_teachers_raw;
+    }
+}
+
+$untrained_teachers = null;
+if ($untrained_teachers_raw !== '') {
+    if (!ctype_digit($untrained_teachers_raw) || (int) $untrained_teachers_raw > 2000) {
+        $errors[] = 'অপ্রশিক্ষিত শিক্ষক সংখ্যা সঠিক নয়।';
+    } else {
+        $untrained_teachers = (int) $untrained_teachers_raw;
+    }
+}
+
+$num_computers = null;
+if ($num_computers_raw !== '') {
+    if (!ctype_digit($num_computers_raw) || (int) $num_computers_raw > 1000) {
+        $errors[] = 'কম্পিউটার সংখ্যা সঠিক নয়।';
+    } else {
+        $num_computers = (int) $num_computers_raw;
+    }
+}
+
+$num_projectors = null;
+if ($num_projectors_raw !== '') {
+    if (!ctype_digit($num_projectors_raw) || (int) $num_projectors_raw > 100) {
+        $errors[] = 'প্রজেক্টর সংখ্যা সঠিক নয়।';
+    } else {
+        $num_projectors = (int) $num_projectors_raw;
+    }
+}
+
+// Optional yes/no fields - sanitize silently
+if ($has_computer_lab !== '' && !in_array($has_computer_lab, ['yes', 'no'], true)) {
+    $has_computer_lab = '';
+}
+if ($has_science_lab !== '' && !in_array($has_science_lab, ['yes', 'no'], true)) {
+    $has_science_lab = '';
+}
+if ($has_library !== '' && !in_array($has_library, ['yes', 'no'], true)) {
+    $has_library = '';
+}
+if ($has_playground !== '' && !in_array($has_playground, ['yes', 'no'], true)) {
+    $has_playground = '';
+}
+if ($has_multimedia_classroom !== '' && !in_array($has_multimedia_classroom, ['yes', 'no'], true)) {
+    $has_multimedia_classroom = '';
+}
+
+// Internet type logic
+if ($has_internet === 'no') {
+    $internet_type = 'none';
+} elseif ($has_internet === 'yes') {
+    if (!in_array($internet_type, ['broadband', 'mobile_data', 'fiber'], true)) {
+        $internet_type = '';
+    }
+} else {
+    $internet_type = '';
+}
+
+// WhatsApp number - optional, try normalise_phone first, then check 10-15 digits
+$head_teacher_whatsapp = '';
+if ($head_teacher_whatsapp_raw !== '') {
+    $normalised = normalise_phone($head_teacher_whatsapp_raw);
+    if ($normalised !== null) {
+        $head_teacher_whatsapp = $normalised;
+    } else {
+        $digits = preg_replace('/[^\d]/', '', $head_teacher_whatsapp_raw);
+        if (strlen($digits) >= 10 && strlen($digits) <= 15) {
+            $head_teacher_whatsapp = $head_teacher_whatsapp_raw;
+        } else {
+            $errors[] = 'WhatsApp নম্বর সঠিক নয়।';
+        }
+    }
+}
+
+// Managing committee phone - optional, validate with normalise_phone
+$managing_committee_phone = '';
+if ($managing_committee_phone_raw !== '') {
+    $normalised = normalise_phone($managing_committee_phone_raw);
+    if ($normalised !== null) {
+        $managing_committee_phone = $normalised;
+    } else {
+        $errors[] = 'পরিচালনা কমিটির চেয়ারম্যান ফোন নম্বর সঠিক নয়।';
+    }
+}
+
 // Quota and uniqueness checks only if everything else looks sane.
 if (!$errors) {
     $quotas = (array) ($CONFIG['quotas'] ?? []);
@@ -236,8 +505,18 @@ try {
              union_name, detailed_address, latitude, longitude,
              owner_name, owner_phone, owner_email, notes,
              total_students, total_teachers, ict_teacher_available,
-             smart_school_reason)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             smart_school_reason,
+             eiin_number, mpo_status, establishment_year, school_phone, school_email, school_website,
+             division, district, upazila, union_ward, village, postal_code,
+             num_buildings, num_classrooms, has_computer_lab, has_science_lab, has_library, has_playground,
+             total_students_boys, total_students_girls,
+             students_class_1, students_class_2, students_class_3, students_class_4, students_class_5,
+             students_class_6, students_class_7, students_class_8, students_class_9, students_class_10,
+             male_teachers, female_teachers, trained_teachers, untrained_teachers,
+             num_computers, has_internet, internet_type, num_projectors, has_multimedia_classroom,
+             existing_software, head_teacher_name, head_teacher_phone, head_teacher_whatsapp,
+             head_teacher_email, managing_committee_chairman, managing_committee_phone)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $insert->execute([
         $institution_type,
@@ -246,8 +525,8 @@ try {
         $subdomain,
         $union_name,
         $detailed_address,
-        $latitude,
-        $longitude,
+        $latitude ?: null,
+        $longitude ?: null,
         $owner_name,
         $owner_phone,
         $validatedEmail,
@@ -256,6 +535,52 @@ try {
         $total_teachers,
         $ict_teacher_available,
         $smart_school_reason,
+        $eiin_number ?: null,
+        $mpo_status,
+        $establishment_year,
+        $school_phone ?: null,
+        $school_email ?: null,
+        $school_website ?: null,
+        $division,
+        $district,
+        $upazila,
+        $union_ward ?: null,
+        $village ?: null,
+        $postal_code ?: null,
+        $num_buildings,
+        $num_classrooms,
+        $has_computer_lab ?: null,
+        $has_science_lab ?: null,
+        $has_library ?: null,
+        $has_playground ?: null,
+        $total_students_boys,
+        $total_students_girls,
+        $students_class_1,
+        $students_class_2,
+        $students_class_3,
+        $students_class_4,
+        $students_class_5,
+        $students_class_6,
+        $students_class_7,
+        $students_class_8,
+        $students_class_9,
+        $students_class_10,
+        $male_teachers,
+        $female_teachers,
+        $trained_teachers,
+        $untrained_teachers,
+        $num_computers,
+        $has_internet,
+        $internet_type ?: null,
+        $num_projectors,
+        $has_multimedia_classroom ?: null,
+        $existing_software ?: null,
+        $owner_name,
+        $owner_phone,
+        $head_teacher_whatsapp ?: null,
+        $validatedEmail,
+        $managing_committee_chairman ?: null,
+        $managing_committee_phone ?: null,
     ]);
 
     $log = $db->prepare('INSERT INTO submission_log (ip_address) VALUES (?)');
@@ -280,7 +605,10 @@ try {
 }
 
 $_SESSION['submission_success'] = [
-    'school'    => $school_name,
-    'subdomain' => $subdomain . '.smartschool.bd',
+    'school'           => $school_name,
+    'subdomain'        => $subdomain . '.smartschool.bd',
+    'owner_name'       => $owner_name,
+    'institution_type' => institution_label($institution_type),
+    'union_name'       => $union_name,
 ];
 redirect('/success.php');

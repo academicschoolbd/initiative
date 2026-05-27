@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_toggle'])) {
 // ---------------------------------------------------------------------
 $q          = trim((string) ($_GET['q'] ?? ''));
 $typeFilter = (string) ($_GET['type'] ?? '');
-$validTypes = ['', 'primary', 'madrasah', 'high_school'];
+$validTypes = array_merge([''], array_keys(institution_types()));
 if (!in_array($typeFilter, $validTypes, true)) {
     $typeFilter = '';
 }
@@ -46,7 +46,11 @@ if ($q !== '') {
                 OR owner_name LIKE :q
                 OR owner_phone LIKE :q
                 OR owner_email LIKE :q
-                OR union_name LIKE :q)';
+                OR union_name LIKE :q
+                OR head_teacher_name LIKE :q
+                OR head_teacher_phone LIKE :q
+                OR eiin_number LIKE :q
+                OR school_phone LIKE :q)';
     $params[':q'] = '%' . $q . '%';
 }
 if ($typeFilter !== '') {
@@ -61,10 +65,20 @@ $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 if (($_GET['export'] ?? '') === 'csv') {
     $stmt = $db->prepare(
         "SELECT id, institution_type, school_name, school_name_bn, subdomain,
-                union_name, detailed_address, latitude, longitude,
-                owner_name, owner_phone, owner_email, notes, created_at,
-                total_students, total_teachers, ict_teacher_available,
-                smart_school_reason
+                eiin_number, mpo_status, establishment_year,
+                division, district, upazila, union_name, union_ward, village, postal_code, detailed_address,
+                latitude, longitude,
+                head_teacher_name, head_teacher_phone, head_teacher_whatsapp, head_teacher_email,
+                managing_committee_chairman, managing_committee_phone,
+                school_phone, school_email, school_website,
+                total_students, total_students_boys, total_students_girls,
+                students_class_1, students_class_2, students_class_3, students_class_4, students_class_5,
+                students_class_6, students_class_7, students_class_8, students_class_9, students_class_10,
+                total_teachers, male_teachers, female_teachers, trained_teachers, untrained_teachers,
+                ict_teacher_available, num_buildings, num_classrooms,
+                has_computer_lab, has_science_lab, has_library, has_playground,
+                num_computers, has_internet, internet_type, num_projectors, has_multimedia_classroom,
+                existing_software, smart_school_reason, notes, created_at
            FROM registrations $whereSql
        ORDER BY id DESC"
     );
@@ -78,11 +92,20 @@ if (($_GET['export'] ?? '') === 'csv') {
     // UTF-8 BOM so Excel renders Bangla correctly out of the box.
     fwrite($out, "\xEF\xBB\xBF");
     fputcsv($out, [
-        'ID', 'Type', 'School (EN)', 'School (BN)', 'Subdomain',
-        'Union', 'Address', 'Latitude', 'Longitude',
-        'Owner Name', 'Owner Phone', 'Owner Email',
-        'Total Students', 'Total Teachers', 'ICT Teacher Available',
-        'Why Smart School', 'Notes', 'Created At',
+        'ID', 'Type', 'School (EN)', 'School (BN)', 'Subdomain', 'EIIN', 'MPO Status', 'Est. Year',
+        'Division', 'District', 'Upazila', 'Union', 'Union Ward', 'Village', 'Postal Code', 'Address',
+        'Latitude', 'Longitude',
+        'Head Teacher', 'Phone', 'WhatsApp', 'Email',
+        'Managing Committee Chairman', 'Chairman Phone',
+        'School Phone', 'School Email', 'Website',
+        'Total Students', 'Boys', 'Girls',
+        'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
+        'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
+        'Total Teachers', 'Male', 'Female', 'Trained', 'Untrained',
+        'ICT Teacher', 'Buildings', 'Classrooms',
+        'Computer Lab', 'Science Lab', 'Library', 'Playground',
+        'Computers', 'Internet', 'Internet Type', 'Projectors', 'Multimedia Classroom',
+        'Existing Software', 'Why Smart School', 'Notes', 'Created At',
     ], ',', '"', '');
     while ($row = $stmt->fetch()) {
         fputcsv($out, [
@@ -91,18 +114,61 @@ if (($_GET['export'] ?? '') === 'csv') {
             $row['school_name'],
             $row['school_name_bn'],
             $row['subdomain'] . '.smartschool.bd',
-            $row['union_name'],
-            $row['detailed_address'],
-            $row['latitude'],
-            $row['longitude'],
-            $row['owner_name'],
-            $row['owner_phone'],
-            $row['owner_email'],
+            $row['eiin_number'] ?? '',
+            $row['mpo_status'] ?? '',
+            $row['establishment_year'] ?? '',
+            $row['division'] ?? '',
+            $row['district'] ?? '',
+            $row['upazila'] ?? '',
+            $row['union_name'] ?? '',
+            $row['union_ward'] ?? '',
+            $row['village'] ?? '',
+            $row['postal_code'] ?? '',
+            $row['detailed_address'] ?? '',
+            $row['latitude'] ?? '',
+            $row['longitude'] ?? '',
+            $row['head_teacher_name'] ?? '',
+            $row['head_teacher_phone'] ?? '',
+            $row['head_teacher_whatsapp'] ?? '',
+            $row['head_teacher_email'] ?? '',
+            $row['managing_committee_chairman'] ?? '',
+            $row['managing_committee_phone'] ?? '',
+            $row['school_phone'] ?? '',
+            $row['school_email'] ?? '',
+            $row['school_website'] ?? '',
             $row['total_students'] ?? '',
+            $row['total_students_boys'] ?? '',
+            $row['total_students_girls'] ?? '',
+            $row['students_class_1'] ?? '',
+            $row['students_class_2'] ?? '',
+            $row['students_class_3'] ?? '',
+            $row['students_class_4'] ?? '',
+            $row['students_class_5'] ?? '',
+            $row['students_class_6'] ?? '',
+            $row['students_class_7'] ?? '',
+            $row['students_class_8'] ?? '',
+            $row['students_class_9'] ?? '',
+            $row['students_class_10'] ?? '',
             $row['total_teachers'] ?? '',
+            $row['male_teachers'] ?? '',
+            $row['female_teachers'] ?? '',
+            $row['trained_teachers'] ?? '',
+            $row['untrained_teachers'] ?? '',
             $row['ict_teacher_available'] ?? '',
+            $row['num_buildings'] ?? '',
+            $row['num_classrooms'] ?? '',
+            $row['has_computer_lab'] ?? '',
+            $row['has_science_lab'] ?? '',
+            $row['has_library'] ?? '',
+            $row['has_playground'] ?? '',
+            $row['num_computers'] ?? '',
+            $row['has_internet'] ?? '',
+            $row['internet_type'] ?? '',
+            $row['num_projectors'] ?? '',
+            $row['has_multimedia_classroom'] ?? '',
+            $row['existing_software'] ?? '',
             $row['smart_school_reason'] ?? '',
-            $row['notes'],
+            $row['notes'] ?? '',
             $row['created_at'],
         ], ',', '"', '');
     }
@@ -117,6 +183,10 @@ $total       = (int) $db->query("SELECT COUNT(*) FROM registrations")->fetchColu
 $primaries   = (int) $db->query("SELECT COUNT(*) FROM registrations WHERE institution_type='primary'")->fetchColumn();
 $madrasahs   = (int) $db->query("SELECT COUNT(*) FROM registrations WHERE institution_type='madrasah'")->fetchColumn();
 $highSchools = (int) $db->query("SELECT COUNT(*) FROM registrations WHERE institution_type='high_school'")->fetchColumn();
+$technical   = (int) $db->query("SELECT COUNT(*) FROM registrations WHERE institution_type='technical'")->fetchColumn();
+$colleges    = (int) $db->query("SELECT COUNT(*) FROM registrations WHERE institution_type='college'")->fetchColumn();
+$dakhilMadrasah = (int) $db->query("SELECT COUNT(*) FROM registrations WHERE institution_type='dakhil_madrasah'")->fetchColumn();
+$alimMadrasah   = (int) $db->query("SELECT COUNT(*) FROM registrations WHERE institution_type='alim_madrasah'")->fetchColumn();
 
 $quotas = (array) ($CONFIG['quotas'] ?? []);
 
@@ -324,6 +394,38 @@ $buildUrl = function (array $overrides) use ($q, $typeFilter, $page): string {
                 <?php endif; ?>
             </div>
         </div>
+        <div class="metric-card">
+            <h3>কারিগরি শিক্ষা প্রতিষ্ঠান</h3>
+            <div class="count">
+                <?= e((string) $technical) ?><?php if (!empty($quotas['technical'])): ?>
+                    <span class="quota">/ <?= e((string) $quotas['technical']) ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="metric-card">
+            <h3>কলেজ</h3>
+            <div class="count">
+                <?= e((string) $colleges) ?><?php if (!empty($quotas['college'])): ?>
+                    <span class="quota">/ <?= e((string) $quotas['college']) ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="metric-card">
+            <h3>দাখিল মাদ্রাসা</h3>
+            <div class="count">
+                <?= e((string) $dakhilMadrasah) ?><?php if (!empty($quotas['dakhil_madrasah'])): ?>
+                    <span class="quota">/ <?= e((string) $quotas['dakhil_madrasah']) ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="metric-card">
+            <h3>আলিম মাদ্রাসা</h3>
+            <div class="count">
+                <?= e((string) $alimMadrasah) ?><?php if (!empty($quotas['alim_madrasah'])): ?>
+                    <span class="quota">/ <?= e((string) $quotas['alim_madrasah']) ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
     </section>
 
     <div class="controls">
@@ -332,9 +434,9 @@ $buildUrl = function (array $overrides) use ($q, $typeFilter, $page): string {
                    placeholder="স্কুল, সাবডোমেন, ফোন বা ইমেইল দিয়ে খুঁজুন..." aria-label="Search">
             <select name="type" aria-label="Filter by type">
                 <option value="">সব ধরন</option>
-                <option value="primary"     <?= $typeFilter === 'primary' ? 'selected' : '' ?>>প্রাথমিক</option>
-                <option value="madrasah"    <?= $typeFilter === 'madrasah' ? 'selected' : '' ?>>মাদ্রাসা</option>
-                <option value="high_school" <?= $typeFilter === 'high_school' ? 'selected' : '' ?>>মাধ্যমিক</option>
+                <?php foreach (institution_types() as $code => $label): ?>
+                    <option value="<?= e($code) ?>" <?= $typeFilter === $code ? 'selected' : '' ?>><?= e($label) ?></option>
+                <?php endforeach; ?>
             </select>
             <button type="submit" class="btn">খুঁজুন</button>
             <?php if ($q !== '' || $typeFilter !== ''): ?>

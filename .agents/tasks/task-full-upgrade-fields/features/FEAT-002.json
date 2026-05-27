@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Completely rewrite the public registration form (index.php) to include all new fields organized into a 5-step wizard with comprehensive sections. Includes WhatsApp field, no NID field.",
+  "status": "completed",
+  "steps": [
+    "Redesign the step wizard from 3 steps to 5 steps: Step 1 - Head Teacher/Principal Info (প্রধান শিক্ষকের তথ্য), Step 2 - Institution Basic Info (প্রতিষ্ঠানের মৌলিক তথ্য), Step 3 - Address & Location (ঠিকানা ও অবস্থান), Step 4 - Infrastructure & Students (অবকাঠামো ও শিক্ষার্থী), Step 5 - Technology & Vision (প্রযুক্তি ও লক্ষ্য)",
+    "Step 1 fields: head_teacher_name (required), head_teacher_phone (required, BD mobile), head_teacher_whatsapp (optional, BD mobile or international - label it 'WhatsApp Number'), head_teacher_email (required, email), managing_committee_chairman (optional), managing_committee_phone (optional). NOTE: No NID field at all.",
+    "Step 2 fields: institution_type (required, select from expanded list via institution_types()), school_name (required), school_name_bn (optional), eiin_number (optional, numeric), mpo_status (required, select: mpo/non_mpo/newly_nationalized), establishment_year (optional, 4-digit year), school_phone (optional), school_email (optional), school_website (optional)",
+    "Step 3 fields: division (required, select from 8 divisions - pre-fill 'চট্টগ্রাম'), district (required, select - pre-fill 'কক্সবাজার'), upazila (required, select - pre-fill 'মহেশখালী'), union_ward (required, select from Maheshkhali unions - replaces old union_name), village (optional), postal_code (optional), detailed_address (required), latitude (auto/optional), longitude (auto/optional) with GPS button",
+    "Step 4 fields: total_students (required), total_students_boys (optional), total_students_girls (optional), per-class student counts students_class_1 through students_class_10 (all optional, in a compact grid), total_teachers (required), male_teachers (optional), female_teachers (optional), trained_teachers (optional), untrained_teachers (optional), num_buildings (optional), num_classrooms (optional), has_computer_lab (yes/no radio), has_science_lab (yes/no radio), has_library (yes/no radio), has_playground (yes/no radio)",
+    "Step 5 fields: num_computers (optional), has_internet (yes/no radio), internet_type (select: broadband/mobile_data/fiber/none - shown conditionally if has_internet=yes), num_projectors (optional), has_multimedia_classroom (yes/no radio), existing_software (textarea, optional), ict_teacher_available (yes/no radio, required), subdomain (required, with live preview), smart_school_reason (required textarea), notes (optional textarea), terms_accept checkbox",
+    "Update the stepper nav indicators to show 5 steps with appropriate icons and labels",
+    "Update the JavaScript wizard navigation to handle 5 steps, update validateStep() to cover the new fields, update the error-jump logic for 5 steps",
+    "Keep all existing styling patterns (CSS custom properties, bd-* class names, section banners with color variants, grid layout). Add additional CSS only for new elements like class-grid for per-class student inputs",
+    "The old owner_name/owner_phone/owner_email fields should map to head_teacher_name/head_teacher_phone/head_teacher_email in the form (the submit name attributes). Keep backward compatibility by mapping: owner_name = head_teacher_name, owner_phone = head_teacher_phone, owner_email = head_teacher_email in the form field names so submit.php can handle both old and new field names. Actually, keep the form field names as owner_name, owner_phone, owner_email for the head teacher to maintain backward compat with submit.php - just relabel them as Head Teacher info.",
+    "Ensure the union_name field is now renamed to union_ward in the form (the select element name attribute) BUT also submit a hidden field union_name that copies the union_ward value for backward compat with the DB schema. Actually simpler: keep the form field name as union_name since that column still exists in DB, the new union_ward column is additional context."
+  ],
+  "acceptance_criteria": [
+    "php -l index.php passes without syntax errors",
+    "The form renders 5 distinct step panels with proper navigation",
+    "All new fields use the $o() helper for old-input repopulation",
+    "The stepper indicators update correctly for 5 steps",
+    "The form still submits to submit.php with method POST and includes CSRF token and honeypot",
+    "GPS location button still works",
+    "Subdomain live preview still works",
+    "Bilingual labels are present on all fields (Bangla primary, English)",
+    "WhatsApp number field is present in Step 1",
+    "No NID field exists anywhere in the form"
+  ],
+  "verification": [
+    "php -l index.php"
+  ],
+  "blocked_reason": null,
+  "findings": "Complete 5-step wizard implemented. All PHP syntax checks pass. WhatsApp field (head_teacher_whatsapp) included in Step 1. No NID field anywhere. Backward compat maintained: owner_name, owner_phone, owner_email field names kept for head teacher. union_name kept as select name with hidden union_ward synced via JS. institution_types() helper used for dynamic type options. Class-wise student grid uses 5-column layout. All radio groups use bd-pills pattern. Error-jump logic updated for 5 steps. [Review fix] Removed 'none' option from internet_type dropdown; updated error-jump step3 to include division, district, upazila."
+}

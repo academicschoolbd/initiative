@@ -129,13 +129,25 @@ function is_reserved_subdomain(string $value): bool
 }
 
 /**
+ * Return the full map of institution type codes to Bangla labels.
+ */
+function institution_types(): array
+{
+    return [
+        'primary'          => 'প্রাথমিক বিদ্যালয়',
+        'high_school'      => 'মাধ্যমিক বিদ্যালয়',
+        'madrasah'         => 'মাদ্রাসা',
+        'dakhil_madrasah'  => 'দাখিল মাদ্রাসা',
+        'alim_madrasah'    => 'আলিম মাদ্রাসা',
+        'technical'        => 'কারিগরি শিক্ষা প্রতিষ্ঠান',
+        'college'          => 'কলেজ',
+    ];
+}
+
+/**
  * Render the Bangla label for an institution_type code.
  */
 function institution_label(string $code): string
 {
-    return [
-        'primary'     => 'প্রাথমিক',
-        'madrasah'    => 'মাদ্রাসা',
-        'high_school' => 'মাধ্যমিক',
-    ][$code] ?? $code;
+    return institution_types()[$code] ?? $code;
 }

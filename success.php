@@ -65,6 +65,15 @@ if (!is_array($data)) {
 
     <div class="meta-data-box">
         <div><strong>শিক্ষা প্রতিষ্ঠান:</strong> <?= e((string) ($data['school'] ?? '')) ?></div>
+        <?php if (!empty($data['institution_type'])): ?>
+        <div><strong>প্রতিষ্ঠানের ধরন:</strong> <?= e((string) $data['institution_type']) ?></div>
+        <?php endif; ?>
+        <?php if (!empty($data['owner_name'])): ?>
+        <div><strong>প্রধান শিক্ষক:</strong> <?= e((string) $data['owner_name']) ?></div>
+        <?php endif; ?>
+        <?php if (!empty($data['union_name'])): ?>
+        <div><strong>ইউনিয়ন:</strong> <?= e((string) $data['union_name']) ?></div>
+        <?php endif; ?>
         <div>
             <strong>প্রস্তাবিত ডোমেন রুট:</strong>
             <span style="font-family:monospace; color:#059669; font-weight:700;">

@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Database schema migration (version 5) adding all new comprehensive fields to the registrations table, plus updated helpers and config",
+  "status": "completed",
+  "steps": [
+    "Add migration version 5 in database.php that adds the following columns to the registrations table (using the same PRAGMA table_info idempotent pattern as migration 4): eiin_number TEXT, mpo_status TEXT, establishment_year INTEGER, school_phone TEXT, school_email TEXT, school_website TEXT, division TEXT, district TEXT, upazila TEXT, union_ward TEXT, village TEXT, postal_code TEXT, num_buildings INTEGER, num_classrooms INTEGER, has_computer_lab TEXT, has_science_lab TEXT, has_library TEXT, has_playground TEXT, total_students_boys INTEGER, total_students_girls INTEGER, students_class_1 INTEGER, students_class_2 INTEGER, students_class_3 INTEGER, students_class_4 INTEGER, students_class_5 INTEGER, students_class_6 INTEGER, students_class_7 INTEGER, students_class_8 INTEGER, students_class_9 INTEGER, students_class_10 INTEGER, male_teachers INTEGER, female_teachers INTEGER, trained_teachers INTEGER, untrained_teachers INTEGER, num_computers INTEGER, has_internet TEXT, internet_type TEXT, num_projectors INTEGER, has_multimedia_classroom TEXT, existing_software TEXT, head_teacher_name TEXT, head_teacher_phone TEXT, head_teacher_whatsapp TEXT, head_teacher_email TEXT, managing_committee_chairman TEXT, managing_committee_phone TEXT",
+    "Update the institution_type valid types to add: 'technical', 'college', 'dakhil_madrasah', 'alim_madrasah' in the helpers.php institution_label() function - add Bangla labels for each new type",
+    "Add a new helper function institution_types(): array in helpers.php that returns the full list of valid institution types with their Bangla labels (used by both form and validation)",
+    "Update config.example.php quotas array to include the new institution types with default quota 3"
+  ],
+  "acceptance_criteria": [
+    "php -l database.php passes without syntax errors",
+    "php -l includes/helpers.php passes without syntax errors",
+    "php -l config.example.php passes without syntax errors",
+    "Migration version 5 follows the same idempotent PRAGMA table_info pattern as version 4",
+    "institution_types() returns an associative array of code => Bangla label for all types",
+    "institution_label() uses institution_types() internally to avoid duplication",
+    "No NID field is included anywhere - the head_teacher_nid column is NOT added",
+    "head_teacher_whatsapp field IS included for WhatsApp number"
+  ],
+  "verification": [
+    "php -l database.php",
+    "php -l includes/helpers.php",
+    "php -l config.example.php"
+  ],
+  "blocked_reason": null,
+  "findings": "All syntax checks pass. Migration 5 adds 38 columns following the same PRAGMA table_info idempotent pattern as migration 4. No NID field included. WhatsApp field (head_teacher_whatsapp) is included. institution_types() returns 7 types with Bangla labels. Config quotas expanded to all 7 types."
+}

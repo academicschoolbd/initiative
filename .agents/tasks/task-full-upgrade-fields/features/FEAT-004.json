@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Update admin dashboard (admin.php) and admin actions (admin-action.php) to display, search, export, view, and edit all new fields. Also update success.php.",
+  "status": "completed",
+  "steps": [
+    "Update admin.php CSV export to include all new columns in the SELECT and fputcsv output with appropriate headers",
+    "Update admin.php search query ($where clause) to also search head_teacher_name, head_teacher_phone, eiin_number, school_phone in addition to existing search fields",
+    "Update admin.php metrics section: add metric cards for the new institution types (technical, college, dakhil_madrasah, alim_madrasah) with quota display",
+    "Update admin.php table: keep it manageable - show school_name, type, union_name, subdomain, head_teacher_phone (or owner_phone), created_at, actions. The table does not need to show every field - that is what the View action is for",
+    "Update admin-action.php VIEW section to display ALL new fields organized in clear sections: Institution Details, Head Teacher/Contact, Address, Infrastructure, Student Statistics, Teacher Statistics, Technology Readiness, Domain & Vision",
+    "Update admin-action.php EDIT form to include input fields for ALL new columns, organized in sections matching the view. Use the same $v() helper pattern for old-input fallback. All new fields should be editable.",
+    "Update admin-action.php UPDATE validation to validate all new fields (same rules as submit.php but admin can leave optional fields blank to clear them)",
+    "Update admin-action.php UPDATE SQL to include all new columns in the UPDATE SET clause",
+    "Update admin-action.php institution_type select to use institution_types() helper for the full list",
+    "Update success.php to show a richer confirmation: include head teacher name, institution type label, union, and the proposed subdomain"
+  ],
+  "acceptance_criteria": [
+    "php -l admin.php passes without syntax errors",
+    "php -l admin-action.php passes without syntax errors",
+    "php -l success.php passes without syntax errors",
+    "CSV export includes all new field columns",
+    "Admin view shows all fields organized in clear sections",
+    "Admin edit form includes all new fields with proper input types",
+    "Admin update validation mirrors submit.php rules for new fields",
+    "No NID field appears anywhere in admin views or forms"
+  ],
+  "verification": [
+    "php -l admin.php",
+    "php -l admin-action.php",
+    "php -l success.php"
+  ],
+  "blocked_reason": null,
+  "findings": "All files pass syntax checks. WhatsApp field (head_teacher_whatsapp) included in view, edit, CSV export, and update validation. No NID field anywhere. Admin CSV exports 60 columns matching the spec. View section organized into 7 sections with h3 headers. Edit form has all new fields with proper input types. Update validation mirrors submit.php rules (lenient for admin). Metrics grid shows all 7 institution types. Filter dropdown uses institution_types() dynamically. Search expanded to include head_teacher_name, head_teacher_phone, eiin_number, school_phone. success.php shows head teacher name, institution type, union, and subdomain. submit.php session data updated to pass extra fields. [Review fix] Added $caps array with 17 fields for length capping in admin-action.php UPDATE handler, fixed yes/no error messages to use Bangla labels."
+}
