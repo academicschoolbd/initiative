@@ -983,7 +983,7 @@ $o = function (string $key, string $default = '') use ($old): string {
                     <select class="bd-select" id="internet_type" name="internet_type">
                         <option value="">-- নির্বাচন করুন --</option>
                         <?php
-                        $netTypes = ['broadband' => 'ব্রডব্যান্ড (Broadband)', 'mobile_data' => 'মোবাইল ডাটা (Mobile Data)', 'fiber' => 'ফাইবার (Fiber)', 'none' => 'নেই (None)'];
+                        $netTypes = ['broadband' => 'ব্রডব্যান্ড (Broadband)', 'mobile_data' => 'মোবাইল ডাটা (Mobile Data)', 'fiber' => 'ফাইবার (Fiber)'];
                         $selNet = (string) ($old['internet_type'] ?? '');
                         foreach ($netTypes as $nCode => $nLabel): ?>
                             <option value="<?= e($nCode) ?>" <?= $selNet === $nCode ? 'selected' : '' ?>><?= e($nLabel) ?></option>
@@ -1280,7 +1280,7 @@ $o = function (string $key, string $default = '') use ($old): string {
     document.addEventListener('DOMContentLoaded', function () {
         var step1 = ['owner_name', 'owner_phone', 'owner_email'];
         var step2 = ['institution_type', 'school_name', 'mpo_status'];
-        var step3 = ['union_name', 'detailed_address'];
+        var step3 = ['division', 'district', 'upazila', 'union_name', 'detailed_address'];
         var step4 = ['total_students', 'total_teachers'];
         var step5 = ['subdomain', 'smart_school_reason'];
 

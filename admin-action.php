@@ -121,6 +121,32 @@ if ($action === 'update') {
     $managing_committee_chairman   = input('managing_committee_chairman');
     $managing_committee_phone_raw  = input('managing_committee_phone');
 
+    // Length caps (same pattern as submit.php)
+    $caps = [
+        'school_name'         => 200,
+        'school_name_bn'      => 200,
+        'union_name'          => 100,
+        'detailed_address'    => 500,
+        'owner_name'          => 150,
+        'notes'               => 2000,
+        'owner_email'         => 254,
+        'smart_school_reason' => 2000,
+        'school_phone'        => 20,
+        'school_email_field'  => 254,
+        'school_website'      => 200,
+        'village'             => 200,
+        'postal_code'         => 10,
+        'existing_software'   => 2000,
+        'managing_committee_chairman' => 150,
+        'managing_committee_phone_raw' => 20,
+        'head_teacher_whatsapp_raw'    => 20,
+    ];
+    foreach ($caps as $capField => $capLen) {
+        if (mb_strlen($$capField) > $capLen) {
+            $$capField = mb_substr($$capField, 0, $capLen);
+        }
+    }
+
     $errors = [];
     $validTypes = array_keys(institution_types());
 
@@ -269,9 +295,18 @@ if ($action === 'update') {
     }
     // Yes/no fields
     $yesNoFields = ['has_computer_lab', 'has_science_lab', 'has_library', 'has_playground', 'has_internet', 'has_multimedia_classroom'];
+    $yesNoLabels = [
+        'has_computer_lab'        => 'কম্পিউটার ল্যাব',
+        'has_science_lab'         => 'বিজ্ঞানাগার',
+        'has_library'             => 'লাইব্রেরি',
+        'has_playground'          => 'খেলার মাঠ',
+        'has_internet'            => 'ইন্টারনেট সংযোগ',
+        'has_multimedia_classroom'=> 'মাল্টিমিডিয়া ক্লাসরুম',
+        'ict_teacher_available'   => 'ICT শিক্ষক',
+    ];
     foreach ($yesNoFields as $ynf) {
         if ($$ynf !== '' && !in_array($$ynf, ['yes', 'no'], true)) {
-            $errors[] = "$ynf ফিল্ডের মান সঠিক নয়।";
+            $errors[] = ($yesNoLabels[$ynf] ?? $ynf) . ' ফিল্ডের মান সঠিক নয়।';
             $$ynf = '';
         }
     }
@@ -296,8 +331,6 @@ if ($action === 'update') {
         if ($normalised !== null) { $managing_committee_phone = $normalised; }
         else { $errors[] = 'পরিচালনা কমিটির চেয়ারম্যান ফোন নম্বর সঠিক নয়।'; }
     }
-    // Length caps
-    if (mb_strlen($existing_software) > 2000) { $existing_software = mb_substr($existing_software, 0, 2000); }
 
     if (!$errors) {
         $dupe = $db->prepare('SELECT id FROM registrations WHERE subdomain = ? AND id != ?');
