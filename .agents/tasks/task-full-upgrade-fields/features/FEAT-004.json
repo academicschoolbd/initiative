@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Update admin dashboard (admin.php) and admin actions (admin-action.php) to display, search, export, view, and edit all new fields. Also update success.php.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Update admin.php CSV export to include all new columns in the SELECT and fputcsv output with appropriate headers",
     "Update admin.php search query ($where clause) to also search head_teacher_name, head_teacher_phone, eiin_number, school_phone in addition to existing search fields",
@@ -31,5 +31,5 @@
     "php -l success.php"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All files pass syntax checks. WhatsApp field (head_teacher_whatsapp) included in view, edit, CSV export, and update validation. No NID field anywhere. Admin CSV exports 60 columns matching the spec. View section organized into 7 sections with h3 headers. Edit form has all new fields with proper input types. Update validation mirrors submit.php rules (lenient for admin). Metrics grid shows all 7 institution types. Filter dropdown uses institution_types() dynamically. Search expanded to include head_teacher_name, head_teacher_phone, eiin_number, school_phone. success.php shows head teacher name, institution type, union, and subdomain. submit.php session data updated to pass extra fields."
 }
