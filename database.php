@@ -129,6 +129,72 @@ try {
                 }
             }
         },
+
+        5 => function (PDO $db): void {
+            // Comprehensive institution profile fields for the upgraded
+            // registration form. Covers EIIN/MPO, address hierarchy,
+            // infrastructure, class-wise enrolment, teacher breakdown,
+            // ICT inventory, and head teacher / managing committee contacts.
+            //
+            // Same idempotent pattern as migration 4.
+            $existing = [];
+            foreach ($db->query("PRAGMA table_info(registrations)") as $col) {
+                $existing[$col['name']] = true;
+            }
+            $additions = [
+                'eiin_number'                 => 'TEXT',
+                'mpo_status'                  => 'TEXT',
+                'establishment_year'          => 'INTEGER',
+                'school_phone'                => 'TEXT',
+                'school_email'                => 'TEXT',
+                'school_website'              => 'TEXT',
+                'division'                    => 'TEXT',
+                'district'                    => 'TEXT',
+                'upazila'                     => 'TEXT',
+                'union_ward'                  => 'TEXT',
+                'village'                     => 'TEXT',
+                'postal_code'                 => 'TEXT',
+                'num_buildings'               => 'INTEGER',
+                'num_classrooms'              => 'INTEGER',
+                'has_computer_lab'            => 'TEXT',
+                'has_science_lab'             => 'TEXT',
+                'has_library'                 => 'TEXT',
+                'has_playground'              => 'TEXT',
+                'total_students_boys'         => 'INTEGER',
+                'total_students_girls'        => 'INTEGER',
+                'students_class_1'            => 'INTEGER',
+                'students_class_2'            => 'INTEGER',
+                'students_class_3'            => 'INTEGER',
+                'students_class_4'            => 'INTEGER',
+                'students_class_5'            => 'INTEGER',
+                'students_class_6'            => 'INTEGER',
+                'students_class_7'            => 'INTEGER',
+                'students_class_8'            => 'INTEGER',
+                'students_class_9'            => 'INTEGER',
+                'students_class_10'           => 'INTEGER',
+                'male_teachers'               => 'INTEGER',
+                'female_teachers'             => 'INTEGER',
+                'trained_teachers'            => 'INTEGER',
+                'untrained_teachers'          => 'INTEGER',
+                'num_computers'               => 'INTEGER',
+                'has_internet'                => 'TEXT',
+                'internet_type'               => 'TEXT',
+                'num_projectors'              => 'INTEGER',
+                'has_multimedia_classroom'    => 'TEXT',
+                'existing_software'           => 'TEXT',
+                'head_teacher_name'           => 'TEXT',
+                'head_teacher_phone'          => 'TEXT',
+                'head_teacher_whatsapp'       => 'TEXT',
+                'head_teacher_email'          => 'TEXT',
+                'managing_committee_chairman' => 'TEXT',
+                'managing_committee_phone'    => 'TEXT',
+            ];
+            foreach ($additions as $name => $type) {
+                if (!isset($existing[$name])) {
+                    $db->exec("ALTER TABLE registrations ADD COLUMN {$name} {$type}");
+                }
+            }
+        },
     ];
 
     foreach ($migrations as $version => $migration) {

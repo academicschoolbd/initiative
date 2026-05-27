@@ -23,9 +23,13 @@ return [
 
     // Pilot programme quotas (per institution_type). Set to 0 to disable a category.
     'quotas' => [
-        'primary'     => 3,
-        'madrasah'    => 3,
-        'high_school' => 3,
+        'primary'         => 3,
+        'high_school'     => 3,
+        'madrasah'        => 3,
+        'dakhil_madrasah' => 3,
+        'alim_madrasah'   => 3,
+        'technical'       => 3,
+        'college'         => 3,
     ],
 
     // Anti-abuse
