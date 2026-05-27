@@ -32,5 +32,5 @@
     "php -l index.php"
   ],
   "blocked_reason": null,
-  "findings": "Complete 5-step wizard implemented. All PHP syntax checks pass. WhatsApp field (head_teacher_whatsapp) included in Step 1. No NID field anywhere. Backward compat maintained: owner_name, owner_phone, owner_email field names kept for head teacher. union_name kept as select name with hidden union_ward synced via JS. institution_types() helper used for dynamic type options. Class-wise student grid uses 5-column layout. All radio groups use bd-pills pattern. Error-jump logic updated for 5 steps."
+  "findings": "Complete 5-step wizard implemented. All PHP syntax checks pass. WhatsApp field (head_teacher_whatsapp) included in Step 1. No NID field anywhere. Backward compat maintained: owner_name, owner_phone, owner_email field names kept for head teacher. union_name kept as select name with hidden union_ward synced via JS. institution_types() helper used for dynamic type options. Class-wise student grid uses 5-column layout. All radio groups use bd-pills pattern. Error-jump logic updated for 5 steps. [Review fix] Removed 'none' option from internet_type dropdown; updated error-jump step3 to include division, district, upazila."
 }
