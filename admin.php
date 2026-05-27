@@ -62,7 +62,9 @@ if (($_GET['export'] ?? '') === 'csv') {
     $stmt = $db->prepare(
         "SELECT id, institution_type, school_name, school_name_bn, subdomain,
                 union_name, detailed_address, latitude, longitude,
-                owner_name, owner_phone, owner_email, notes, created_at
+                owner_name, owner_phone, owner_email, notes, created_at,
+                total_students, total_teachers, ict_teacher_available,
+                smart_school_reason
            FROM registrations $whereSql
        ORDER BY id DESC"
     );
@@ -78,7 +80,9 @@ if (($_GET['export'] ?? '') === 'csv') {
     fputcsv($out, [
         'ID', 'Type', 'School (EN)', 'School (BN)', 'Subdomain',
         'Union', 'Address', 'Latitude', 'Longitude',
-        'Owner Name', 'Owner Phone', 'Owner Email', 'Notes', 'Created At',
+        'Owner Name', 'Owner Phone', 'Owner Email',
+        'Total Students', 'Total Teachers', 'ICT Teacher Available',
+        'Why Smart School', 'Notes', 'Created At',
     ], ',', '"', '');
     while ($row = $stmt->fetch()) {
         fputcsv($out, [
@@ -94,6 +98,10 @@ if (($_GET['export'] ?? '') === 'csv') {
             $row['owner_name'],
             $row['owner_phone'],
             $row['owner_email'],
+            $row['total_students'] ?? '',
+            $row['total_teachers'] ?? '',
+            $row['ict_teacher_available'] ?? '',
+            $row['smart_school_reason'] ?? '',
             $row['notes'],
             $row['created_at'],
         ], ',', '"', '');

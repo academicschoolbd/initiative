@@ -104,6 +104,31 @@ try {
             $db->exec("CREATE INDEX IF NOT EXISTS idx_submission_log_ip_time
                        ON submission_log(ip_address, created_at)");
         },
+
+        4 => function (PDO $db): void {
+            // Operational profile fields requested by the program team:
+            // student/teacher headcounts, ICT-capable teacher flag, and
+            // a free-text "why smart school" motivation paragraph.
+            //
+            // SQLite does not support `IF NOT EXISTS` for ADD COLUMN, so
+            // we introspect the table once and skip any column that's
+            // already present (idempotent re-runs after partial failure).
+            $existing = [];
+            foreach ($db->query("PRAGMA table_info(registrations)") as $col) {
+                $existing[$col['name']] = true;
+            }
+            $additions = [
+                'total_students'        => 'INTEGER',
+                'total_teachers'        => 'INTEGER',
+                'ict_teacher_available' => "TEXT",
+                'smart_school_reason'   => 'TEXT',
+            ];
+            foreach ($additions as $name => $type) {
+                if (!isset($existing[$name])) {
+                    $db->exec("ALTER TABLE registrations ADD COLUMN {$name} {$type}");
+                }
+            }
+        },
     ];
 
     foreach ($migrations as $version => $migration) {

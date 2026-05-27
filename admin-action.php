@@ -71,6 +71,10 @@ if ($action === 'update') {
     $owner_phone_raw  = input('owner_phone');
     $owner_email      = input('owner_email');
     $notes            = input('notes');
+    $total_students_raw    = input('total_students');
+    $total_teachers_raw    = input('total_teachers');
+    $ict_teacher_available = input('ict_teacher_available');
+    $smart_school_reason   = input('smart_school_reason');
 
     $errors = [];
     $validTypes = ['primary', 'madrasah', 'high_school'];
@@ -109,6 +113,34 @@ if ($action === 'update') {
         $errors[] = 'বৈধ ইমেইল প্রদান করুন।';
     }
 
+    // Headcounts and operational profile (admin can leave blank to clear).
+    $total_students = null;
+    if ($total_students_raw !== '') {
+        if (!ctype_digit($total_students_raw) || (int) $total_students_raw > 20000) {
+            $errors[] = 'মোট শিক্ষার্থী সংখ্যা সঠিক নয়।';
+        } else {
+            $total_students = (int) $total_students_raw;
+        }
+    }
+
+    $total_teachers = null;
+    if ($total_teachers_raw !== '') {
+        if (!ctype_digit($total_teachers_raw) || (int) $total_teachers_raw > 2000) {
+            $errors[] = 'মোট শিক্ষক সংখ্যা সঠিক নয়।';
+        } else {
+            $total_teachers = (int) $total_teachers_raw;
+        }
+    }
+
+    if ($ict_teacher_available !== '' && !in_array($ict_teacher_available, ['yes', 'no'], true)) {
+        $errors[] = 'ICT শিক্ষক ফিল্ডের মান সঠিক নয়।';
+        $ict_teacher_available = '';
+    }
+
+    if ($smart_school_reason !== '' && mb_strlen($smart_school_reason) > 2000) {
+        $smart_school_reason = mb_substr($smart_school_reason, 0, 2000);
+    }
+
     if (!$errors) {
         // Subdomain uniqueness — exclude this row.
         $dupe = $db->prepare(
@@ -132,7 +164,9 @@ if ($action === 'update') {
                 institution_type = ?, school_name = ?, school_name_bn = ?,
                 subdomain = ?, union_name = ?, detailed_address = ?,
                 latitude = ?, longitude = ?, owner_name = ?,
-                owner_phone = ?, owner_email = ?, notes = ?
+                owner_phone = ?, owner_email = ?, notes = ?,
+                total_students = ?, total_teachers = ?,
+                ict_teacher_available = ?, smart_school_reason = ?
              WHERE id = ?'
         );
         $stmt->execute([
@@ -140,6 +174,9 @@ if ($action === 'update') {
             $subdomain, $union_name, $detailed_address,
             $latitude, $longitude, $owner_name,
             $owner_phone, $validatedEmail, $notes,
+            $total_students, $total_teachers,
+            $ict_teacher_available !== '' ? $ict_teacher_available : null,
+            $smart_school_reason !== '' ? $smart_school_reason : null,
             $id,
         ]);
     } catch (PDOException $e) {
@@ -291,6 +328,40 @@ $v = function (string $key, $fallback) use ($editOld, $record): string {
             </div>
 
             <div class="data-row">
+                <div class="data-lbl">শিক্ষার্থী ও শিক্ষক সংখ্যা</div>
+                <div class="data-val">
+                    মোট শিক্ষার্থী:
+                    <strong><?= e((string) ($record['total_students'] ?? '')) ?: '<em style="color:var(--muted);">N/A</em>' ?></strong>
+                    &nbsp;·&nbsp;
+                    মোট শিক্ষক:
+                    <strong><?= e((string) ($record['total_teachers'] ?? '')) ?: '<em style="color:var(--muted);">N/A</em>' ?></strong>
+                </div>
+            </div>
+
+            <div class="data-row">
+                <div class="data-lbl">ICT অভিজ্ঞ শিক্ষক আছেন?</div>
+                <div class="data-val">
+                    <?php $ictVal = (string) ($record['ict_teacher_available'] ?? ''); ?>
+                    <?php if ($ictVal === 'yes'): ?>
+                        <span style="color:#15803d; font-weight:600;">হ্যাঁ আছেন (Yes)</span>
+                    <?php elseif ($ictVal === 'no'): ?>
+                        <span style="color:#b91c1c; font-weight:600;">না, নেই (No)</span>
+                    <?php else: ?>
+                        <em style="color:var(--muted);">উল্লেখ করা হয়নি</em>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="data-row">
+                <div class="data-lbl">স্কুলকে স্মার্ট করতে চান কেন?</div>
+                <div class="data-val">
+                    <?= !empty($record['smart_school_reason'])
+                        ? nl2br(e($record['smart_school_reason']))
+                        : '<em style="color:var(--muted);">উত্তর পাওয়া যায়নি।</em>' ?>
+                </div>
+            </div>
+
+            <div class="data-row">
                 <div class="data-lbl">অতিরিক্ত নোট</div>
                 <div class="data-val">
                     <?= $record['notes']
@@ -408,6 +479,36 @@ $v = function (string $key, $fallback) use ($editOld, $record): string {
                     <label class="fl" for="ed_email">Email Address</label>
                     <input class="form-control" id="ed_email" type="email" name="owner_email" required
                            value="<?= $v('owner_email', '') ?>">
+                </div>
+
+                <div class="form-row">
+                    <label class="fl">Total Students / Teachers</label>
+                    <div class="grid-2">
+                        <input class="form-control" type="number" min="0" max="20000"
+                               name="total_students" placeholder="শিক্ষার্থী"
+                               value="<?= $v('total_students', '') ?>">
+                        <input class="form-control" type="number" min="0" max="2000"
+                               name="total_teachers" placeholder="শিক্ষক"
+                               value="<?= $v('total_teachers', '') ?>">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="fl">ICT-experienced Teacher Available</label>
+                    <select class="form-control" name="ict_teacher_available">
+                        <?php
+                        $ictCur = (string) ($editOld['ict_teacher_available'] ?? $record['ict_teacher_available'] ?? '');
+                        ?>
+                        <option value=""    <?= $ictCur === ''    ? 'selected' : '' ?>>— উল্লেখ নেই —</option>
+                        <option value="yes" <?= $ictCur === 'yes' ? 'selected' : '' ?>>হ্যাঁ আছেন (Yes)</option>
+                        <option value="no"  <?= $ictCur === 'no'  ? 'selected' : '' ?>>না, নেই (No)</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label class="fl" for="ed_reason">Why Smart School?</label>
+                    <textarea class="form-control" id="ed_reason" name="smart_school_reason"
+                              maxlength="2000" style="min-height:90px;"><?= $v('smart_school_reason', '') ?></textarea>
                 </div>
 
                 <div class="form-row">

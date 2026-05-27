@@ -136,6 +136,16 @@ $o = function (string $key, string $default = '') use ($old): string {
                       cursor:pointer; font-size:.9rem; color:#334155; }
         .terms-flex input { margin-top:3px; }
 
+        .radio-row { display:flex; flex-wrap:wrap; gap:10px; margin-top:4px; }
+        .radio-pill { flex:1; min-width:160px; display:flex; align-items:center; gap:10px;
+                      padding:11px 14px; border:1px solid var(--border); border-radius:8px;
+                      background:#fff; cursor:pointer; font-size:.92rem; color:#334155;
+                      transition:.15s; }
+        .radio-pill:hover { border-color:#cbd5e1; }
+        .radio-pill input { accent-color:var(--brand); }
+        .radio-pill:has(input:checked) { border-color:var(--brand); background:#ecfdf5;
+                                         box-shadow:0 0 0 3px var(--brand-glow); }
+
         .hp { position:absolute; left:-9999px; top:-9999px; width:1px; height:1px;
               opacity:0; pointer-events:none; }
 
@@ -247,6 +257,40 @@ $o = function (string $key, string $default = '') use ($old): string {
 
                 <div class="grid-2">
                     <div class="field-group">
+                        <label class="field-label" for="total_students">মোট শিক্ষার্থী সংখ্যা<span class="req">*</span></label>
+                        <input class="input-node" id="total_students" name="total_students"
+                               type="number" inputmode="numeric" min="0" max="20000" required
+                               value="<?= $o('total_students') ?>" placeholder="যেমন: 350">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="total_teachers">মোট শিক্ষক সংখ্যা<span class="req">*</span></label>
+                        <input class="input-node" id="total_teachers" name="total_teachers"
+                               type="number" inputmode="numeric" min="0" max="2000" required
+                               value="<?= $o('total_teachers') ?>" placeholder="যেমন: 18">
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" id="lbl-ict-teacher">
+                        ওয়েবসাইট/অ্যাপ পরিচালনার জন্য ICT অভিজ্ঞ শিক্ষক আছেন কি?<span class="req">*</span>
+                    </label>
+                    <div role="radiogroup" aria-labelledby="lbl-ict-teacher" class="radio-row">
+                        <?php $ictPicked = (string) ($old['ict_teacher_available'] ?? ''); ?>
+                        <label class="radio-pill">
+                            <input type="radio" name="ict_teacher_available" value="yes" required
+                                   <?= $ictPicked === 'yes' ? 'checked' : '' ?>>
+                            <span>হ্যাঁ আছেন (Yes)</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input type="radio" name="ict_teacher_available" value="no"
+                                   <?= $ictPicked === 'no' ? 'checked' : '' ?>>
+                            <span>না, নেই (No)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="field-group">
                         <label class="field-label" for="geo-lat">অক্ষাংশ (Latitude)</label>
                         <input class="input-node" id="geo-lat" name="latitude" readonly
                                value="<?= $o('latitude') ?>" placeholder="অটোমেটিক জেনারেট হবে">
@@ -300,9 +344,22 @@ $o = function (string $key, string $default = '') use ($old): string {
                 <h3 class="section-headline">অন্যান্য তথ্য (Part 3)</h3>
 
                 <div class="field-group">
+                    <label class="field-label" for="smart_school_reason">
+                        স্কুলকে স্মার্ট করতে চান কেন?<span class="req">*</span>
+                        <small style="display:block; color:var(--muted); font-weight:500; font-size:.78rem; margin-top:2px;">
+                            Why do you want to make your school smart? (২০–২০০০ অক্ষর)
+                        </small>
+                    </label>
+                    <textarea class="input-node" id="smart_school_reason" name="smart_school_reason"
+                              minlength="20" maxlength="2000" required
+                              style="min-height:120px;"
+                              placeholder="আপনার লক্ষ্য, প্রত্যাশা এবং স্মার্ট স্কুল প্রোগ্রামের প্রতি আগ্রহের কারণ সংক্ষেপে বর্ণনা করুন..."><?= $o('smart_school_reason') ?></textarea>
+                </div>
+
+                <div class="field-group">
                     <label class="field-label" for="notes">অতিরিক্ত তথ্য বা বিশেষ রিকোয়ারমেন্ট (ঐচ্ছিক)</label>
                     <textarea class="input-node" id="notes" name="notes" maxlength="2000"
-                              style="min-height:120px;"
+                              style="min-height:90px;"
                               placeholder="আপনার বিশেষ কোনো মডিউলের প্রয়োজনীয়তা থাকলে এখানে উল্লেখ করুন..."><?= $o('notes') ?></textarea>
                 </div>
 
@@ -394,9 +451,10 @@ $o = function (string $key, string $default = '') use ($old): string {
     document.addEventListener('DOMContentLoaded', function () {
         // step 2 fields — if any of these are missing, skip ahead
         var step2 = ['owner_name','owner_phone','owner_email'];
-        var step3 = ['terms_accept'];
+        var step3 = ['smart_school_reason'];
         var hasStep2 = step2.some(function (n) { return !document.querySelector('[name="'+n+'"]').value; });
-        var hasStep3 = !document.querySelector('[name="terms_accept"]').checked;
+        var hasStep3 = step3.some(function (n) { return !document.querySelector('[name="'+n+'"]').value; })
+                       || !document.querySelector('[name="terms_accept"]').checked;
         if (!hasStep2 && hasStep3) { window.switchStep(3); }
         else if (hasStep2)         { window.switchStep(2); }
     });

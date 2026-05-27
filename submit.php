@@ -72,17 +72,22 @@ $owner_name       = input('owner_name');
 $owner_phone_raw  = input('owner_phone');
 $owner_email      = input('owner_email');
 $notes            = input('notes');
+$total_students_raw    = input('total_students');
+$total_teachers_raw    = input('total_teachers');
+$ict_teacher_available = input('ict_teacher_available');
+$smart_school_reason   = input('smart_school_reason');
 $terms_accept     = !empty($_POST['terms_accept']);
 
 // Length caps to prevent abusive payloads.
 $caps = [
-    'school_name'      => 200,
-    'school_name_bn'   => 200,
-    'union_name'       => 100,
-    'detailed_address' => 500,
-    'owner_name'       => 150,
-    'notes'            => 2000,
-    'owner_email'      => 254,
+    'school_name'         => 200,
+    'school_name_bn'      => 200,
+    'union_name'          => 100,
+    'detailed_address'    => 500,
+    'owner_name'          => 150,
+    'notes'               => 2000,
+    'owner_email'         => 254,
+    'smart_school_reason' => 2000,
 ];
 foreach ($caps as $field => $max) {
     if (mb_strlen($$field) > $max) {
@@ -120,6 +125,38 @@ if ($union_name === '') {
 
 if ($detailed_address === '') {
     $errors[] = 'বিস্তারিত ঠিকানা প্রদান করা আবশ্যক।';
+}
+
+// Headcounts: required, must parse as non-negative integers within sane bounds.
+$total_students = null;
+if ($total_students_raw === '' || !ctype_digit($total_students_raw)) {
+    $errors[] = 'মোট শিক্ষার্থী সংখ্যা একটি বৈধ সংখ্যা হতে হবে।';
+} elseif ((int) $total_students_raw > 20000) {
+    $errors[] = 'শিক্ষার্থী সংখ্যা ২০,০০০ এর বেশি গ্রহণযোগ্য নয়। সঠিক সংখ্যা প্রদান করুন।';
+} else {
+    $total_students = (int) $total_students_raw;
+}
+
+$total_teachers = null;
+if ($total_teachers_raw === '' || !ctype_digit($total_teachers_raw)) {
+    $errors[] = 'মোট শিক্ষক সংখ্যা একটি বৈধ সংখ্যা হতে হবে।';
+} elseif ((int) $total_teachers_raw > 2000) {
+    $errors[] = 'শিক্ষক সংখ্যা ২,০০০ এর বেশি গ্রহণযোগ্য নয়। সঠিক সংখ্যা প্রদান করুন।';
+} else {
+    $total_teachers = (int) $total_teachers_raw;
+}
+
+// ICT-experienced teacher availability — strict yes/no enum.
+if (!in_array($ict_teacher_available, ['yes', 'no'], true)) {
+    $errors[] = 'ICT অভিজ্ঞ শিক্ষক আছেন কিনা জানাতে হ্যাঁ অথবা না নির্বাচন করুন।';
+    $ict_teacher_available = '';
+}
+
+// Why-smart-school motivation paragraph.
+if ($smart_school_reason === '') {
+    $errors[] = 'স্কুলকে স্মার্ট করতে চান কেন — সেই কারণটি লিখুন।';
+} elseif (mb_strlen($smart_school_reason) < 20) {
+    $errors[] = 'স্মার্ট স্কুল সংক্রান্ত আপনার ব্যাখ্যা কমপক্ষে ২০ অক্ষরের হতে হবে।';
 }
 
 // Lat/lng are optional but if provided must parse as numbers in range.
@@ -197,8 +234,10 @@ try {
         'INSERT INTO registrations
             (institution_type, school_name, school_name_bn, subdomain,
              union_name, detailed_address, latitude, longitude,
-             owner_name, owner_phone, owner_email, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             owner_name, owner_phone, owner_email, notes,
+             total_students, total_teachers, ict_teacher_available,
+             smart_school_reason)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $insert->execute([
         $institution_type,
@@ -213,6 +252,10 @@ try {
         $owner_phone,
         $validatedEmail,
         $notes,
+        $total_students,
+        $total_teachers,
+        $ict_teacher_available,
+        $smart_school_reason,
     ]);
 
     $log = $db->prepare('INSERT INTO submission_log (ip_address) VALUES (?)');
