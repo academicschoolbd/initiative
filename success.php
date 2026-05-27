@@ -48,6 +48,16 @@ if (!is_array($data)) {
                     text-decoration:none; font-size:.95rem; transition:.2s;
                     box-shadow:0 4px 12px rgba(22,101,52,.2); }
         .btn-home:hover { background:#14532d; transform:translateY(-1px); }
+
+        @media (max-width: 480px) {
+            body { padding: 16px; }
+            .success-card { padding: 32px 22px; border-radius: 14px; }
+            h2 { font-size: 1.4rem; }
+            p  { font-size: .9rem; }
+            .meta-data-box { padding: 14px; font-size: .85rem; margin-bottom: 22px; }
+            .icon-shield { width: 60px; height: 60px; margin-bottom: 22px; }
+            .btn-home { padding: 11px 22px; font-size: .9rem; }
+        }
     </style>
 </head>
 <body>

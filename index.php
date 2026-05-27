@@ -315,6 +315,52 @@ $o = function (string $key, string $default = '') use ($old): string {
         .bd-sponsor-whatsapp-row { display:flex; justify-content:center; }
 
         .bd-footer-link { text-align:center; margin-top:22px; font-size:.82rem; color:var(--muted); }
+
+        /* -----------------------------------------------------------
+           Responsive — phone & small tablet tightening
+           ----------------------------------------------------------- */
+        @media (max-width: 700px) {
+            body { padding: 24px 12px; }
+            .bd-hero { margin-bottom: 20px; }
+            .bd-hero h1 { font-size: 1.55rem; }
+            .bd-hero p  { font-size: .88rem; }
+            .bd-step { padding: 22px 18px; border-radius: 12px; }
+            .bd-step-helper { margin-bottom: 16px; font-size: .88rem; }
+            .bd-section { padding: 12px 14px; gap: 10px; }
+            .bd-section-icon { width: 28px; height: 28px; flex-basis: 28px; }
+            .bd-section-icon svg { width: 16px; height: 16px; }
+            .bd-section-title { font-size: .9rem; }
+            .bd-section-title small { font-size: .74rem; }
+            .bd-stepper { padding: 10px 12px; }
+            .bd-stepper-num { width: 26px; height: 26px; flex-basis: 26px; font-size: .85rem; }
+            .bd-stepper-line { min-width: 8px; }
+            .bd-input, .bd-select { padding: 10px 12px; font-size: .92rem; }
+            .bd-btn { padding: 11px 18px; font-size: .88rem; }
+            .bd-step-nav { gap: 8px; }
+            .bd-step-nav .bd-btn { flex: 1 1 auto; justify-content: center; }
+            .bd-subdomain input { font-size: .88rem; }
+            .bd-subdomain .bd-fix { padding: 0 10px; font-size: .82rem; }
+            .bd-domain-preview { font-size: .82rem; padding: 8px 12px; }
+            .bd-pill { padding: 10px 12px; font-size: .88rem; min-width: 0; }
+            .bd-check { padding: 12px; font-size: .85rem; }
+            .bd-error { padding: 12px 14px; font-size: .84rem; }
+            /* Sponsor splash modal */
+            .bd-sponsor-card { padding: 32px 22px 22px; border-radius: 12px; }
+            .bd-sponsor-title { font-size: 1.1rem; }
+            .bd-sponsor-credit { font-size: .86rem; }
+            .bd-sponsor-whatsapp { padding: 9px 18px; font-size: .85rem; }
+            .bd-sponsor-eyebrow { font-size: .72rem; }
+        }
+        @media (max-width: 380px) {
+            body { padding: 16px 10px; }
+            .bd-hero h1 { font-size: 1.3rem; }
+            .bd-step { padding: 18px 14px; }
+            .bd-stepper-num { width: 24px; height: 24px; flex-basis: 24px; font-size: .78rem; }
+            .bd-pill { width: 100%; min-width: 0; }
+            .bd-section-title small { display: none; }
+            .bd-sponsor-title { font-size: 1rem; }
+            .bd-sponsor-card { padding: 28px 18px 20px; }
+        }
     </style>
 </head>
 <body>

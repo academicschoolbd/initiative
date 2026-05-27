@@ -256,6 +256,39 @@ $buildUrl = function (array $overrides) use ($q, $typeFilter, $page): string {
         .pager-links span.current { background:var(--foreground); color:#fff; border-color:var(--foreground); }
         .pager-links a:hover { background:#f4f4f5; }
         .empty { text-align:center; padding:48px 16px; color:var(--muted); }
+
+        /* -----------------------------------------------------------
+           Responsive — phone & tablet
+           ----------------------------------------------------------- */
+        @media (max-width: 700px) {
+            body { padding: 18px 12px; }
+            .top-bar { gap: 14px; margin-bottom: 22px; }
+            .top-bar h1 { font-size: 1.3rem; }
+            .top-bar .lead { font-size: .82rem; }
+            .toggle-box { padding: 8px 12px; gap: 8px; flex-wrap: wrap; }
+            .toggle-box span[style] { font-size: .82rem !important; }
+            .toggle-trigger { padding: 5px 11px; font-size: .76rem; }
+            .metric-card { padding: 16px 18px; }
+            .metric-card .count { font-size: 1.4rem; }
+            .controls { gap: 8px; margin-bottom: 12px; }
+            .controls form { gap: 6px; min-width: 0; }
+            .controls input, .controls select { padding: 8px 10px; font-size: .85rem; }
+            .controls .btn { padding: 8px 13px; font-size: .8rem; }
+            th, td { padding: 10px 12px; font-size: .82rem; }
+            th { font-size: .76rem; }
+            .badge { font-size: .7rem; padding: 2px 8px; }
+            .action-btn { padding: 4px 9px; font-size: .72rem; }
+            .pager { font-size: .8rem; }
+            .pager-links a, .pager-links span { padding: 5px 9px; font-size: .8rem; }
+        }
+        @media (max-width: 480px) {
+            body { padding: 14px 10px; }
+            .top-bar h1 { font-size: 1.15rem; }
+            .top-bar .lead { display: none; }
+            .toggle-box { width: 100%; justify-content: space-between; }
+            .metric-card .count { font-size: 1.25rem; }
+            .metric-card h3 { font-size: .72rem; }
+        }
     </style>
 </head>
 <body>

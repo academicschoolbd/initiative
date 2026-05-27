@@ -61,6 +61,16 @@ require_once __DIR__ . '/includes/bootstrap.php';
                       background:var(--brand); color:#fff; text-decoration:none;
                       border-radius:8px; font-weight:600; font-size:.9rem; }
         .legal-back:hover { background:#0f766e; }
+
+        @media (max-width: 600px) {
+            body { padding: 24px 12px; }
+            .legal-hero h1 { font-size: 1.45rem; }
+            .legal-card { padding: 24px 20px; border-radius: 12px; }
+            .legal-card h2 { font-size: 1.1rem; margin: 18px 0 8px; }
+            .legal-card p, .legal-card li { font-size: .88rem; line-height: 1.7; }
+            .legal-callout { padding: 12px; font-size: .85rem; }
+            .legal-back { padding: 10px 16px; font-size: .85rem; }
+        }
     </style>
 </head>
 <body>

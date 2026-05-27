@@ -30,6 +30,13 @@ http_response_code(404);
         a  { display:inline-flex; background:#0f172a; color:#fff; padding:11px 24px;
              border-radius:8px; font-weight:600; text-decoration:none; font-size:.9rem; }
         a:hover { background:#1e293b; }
+
+        @media (max-width: 480px) {
+            .card { padding: 32px 24px; }
+            .code { font-size: 2.6rem; }
+            h1 { font-size: 1.2rem; }
+            p  { font-size: .88rem; }
+        }
     </style>
 </head>
 <body>

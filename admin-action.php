@@ -263,6 +263,20 @@ $v = function (string $key, $fallback) use ($editOld, $record): string {
                color:var(--foreground); display:inline-flex; align-items:center; font-family:inherit; }
         .btn-save { background:var(--foreground); color:#fff; border:none; }
         .btn-save:hover { background:#1e293b; }
+
+        /* Responsive — phone & small tablet */
+        @media (max-width: 600px) {
+            body { padding: 24px 12px; }
+            .action-card { padding: 22px 18px; border-radius: 12px; }
+            h2 { font-size: 1.2rem; margin-bottom: 16px; }
+            .data-row { margin-bottom: 12px; padding-bottom: 10px; }
+            .data-lbl { font-size: .72rem; }
+            .data-val { font-size: .9rem; }
+            .form-control { padding: 10px 12px; font-size: .9rem; }
+            .btn { padding: 10px 18px; font-size: .85rem; }
+            .btn-flex { gap: 8px; }
+            .btn-flex .btn { flex: 1 1 auto; justify-content: center; }
+        }
     </style>
 </head>
 <body>

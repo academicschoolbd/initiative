@@ -100,6 +100,65 @@ and blocks for `config.php`, `*.sqlite`, the `includes/` folder, and the
 example config. Make sure `AllowOverride All` is set for the directory
 in your vhost.
 
+### cPanel / shared hosting (File Manager upload)
+
+The whole project is plain PHP files plus `.htaccess` — no Composer, no
+build step, no Node. Steps:
+
+1. **Upload** the contents of this folder into your hosting account
+   using cPanel **File Manager** → *Upload*.
+   - Most often you will land in `public_html/`. To serve the app at
+     `https://yourdomain.tld/` upload directly into `public_html/`.
+     To serve it at `https://yourdomain.tld/initiative/` create the
+     `initiative/` subfolder first and upload there.
+   - cPanel hides dotfiles by default. Tick *Settings → Show Hidden
+     Files (dotfiles)* before uploading so `.htaccess` and `.gitignore`
+     come along.
+
+2. **Create `config.php`** from the template using *File Manager →
+   New File* (or upload it). Inside `config.php` set:
+
+   ```php
+   'base_path'           => '',                 // '' if served at domain root
+                                                // '/initiative' if in subfolder
+   'admin_password_hash' => '$2y$12$...',       // bcrypt hash of your password
+   'whatsapp_contact'    => '+8801XXXXXXXXX',   // your WhatsApp number
+   'force_https'         => true,               // most cPanel hosts have a free LE cert
+   ```
+
+   To generate the bcrypt hash, open *Terminal* in cPanel (or use a
+   local PHP) and run:
+   ```bash
+   php -r "echo password_hash('your-strong-password', PASSWORD_DEFAULT), PHP_EOL;"
+   ```
+
+3. **Match `.htaccess` `RewriteBase`** to `base_path`. The shipped file
+   has `RewriteBase /initiative/`. If you uploaded to the domain root,
+   change that line to `RewriteBase /`. If your subfolder has a
+   different name, replace `initiative` with that name.
+
+4. **Permissions.** cPanel typically gives files `0644` and folders
+   `0755`, which is fine. The application creates `database.sqlite` on
+   first request, so the *folder containing the project* must be
+   writable by the PHP user. If you see a "Database unavailable"
+   message, right-click the project folder in File Manager →
+   *Change Permissions* and ensure it is `755` (or `775` on some
+   hosts that run PHP as a different user).
+
+5. **Verify.** Open `https://yourdomain.tld/` — you should see the
+   sponsor splash dialog and then the registration form. Open
+   `https://yourdomain.tld/admin.php` and log in with the password you
+   set in step 2.
+
+6. **Sanity-check security.** From any browser run:
+   ```
+   curl -I https://yourdomain.tld/config.php
+   curl -I https://yourdomain.tld/database.sqlite
+   curl -I https://yourdomain.tld/includes/auth.php
+   ```
+   All three should return `403`. If any returns `200`, your host is
+   not honouring `.htaccess` — talk to support before going live.
+
 ### Nginx
 
 `.htaccess` is ignored by Nginx. Equivalent rules:

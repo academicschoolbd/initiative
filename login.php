@@ -70,6 +70,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  border-radius:8px; font-size:.88rem; margin-bottom:18px; }
         .footer { margin-top:18px; text-align:center; font-size:.82rem; color:var(--muted); }
         .footer a { color:var(--muted); text-decoration:underline; }
+
+        @media (max-width: 480px) {
+            body { padding: 16px; }
+            .card { padding: 28px 22px; border-radius: 12px; }
+            h1 { font-size: 1.3rem; }
+            .sub { font-size: .82rem; margin-bottom: 18px; }
+            input[type=text], input[type=password] { padding: 10px 12px; font-size: .9rem; }
+            button { padding: 11px 14px; font-size: .9rem; }
+        }
     </style>
 </head>
 <body>
