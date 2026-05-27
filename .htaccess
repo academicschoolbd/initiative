@@ -1,0 +1,7 @@
+RewriteEngine On
+RewriteBase /initiative/
+
+# ব্রাউজার ইউআরএল থেকে ক্লিন উপায়ে .php এক্সটেনশন হাইড করার নিয়ম
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
