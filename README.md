@@ -159,6 +159,33 @@ build step, no Node. Steps:
    All three should return `403`. If any returns `200`, your host is
    not honouring `.htaccess` — talk to support before going live.
 
+#### Optional helpers
+
+This repository ships with two small conveniences for cPanel deploys
+(both are git-tracked, neither runs at request time):
+
+- **`bin/build-deploy-zip.sh`** — bundles the entire project into a
+  single `smartmaheshkhali-deploy-<timestamp>.zip` ready for File
+  Manager upload. The script automatically excludes `.git/`,
+  `bin/`, `config.php`, `*.log`, and any local SQLite files so
+  secrets and live data never leave your machine. Usage:
+
+  ```bash
+  bash bin/build-deploy-zip.sh
+  # -> writes smartmaheshkhali-deploy-YYYYMMDD-HHMMSS.zip
+  ```
+
+  Upload the resulting ZIP through File Manager → Upload, right-click
+  it → *Extract*, and follow steps 2–6 above.
+
+- **`.cpanel.yml`** — recipe for cPanel's *Git Version Control*
+  feature. If you point a cPanel-hosted git repo at this project and
+  click *Manage → Update from Remote → Deploy HEAD Commit*, cPanel
+  will run the rsync defined in this file, which copies everything
+  into your public folder while preserving the live `config.php`
+  and SQLite database. **You must change** the `CPANEL_USER` and
+  `DEPLOYPATH` lines inside the file before the first deploy.
+
 ### Nginx
 
 `.htaccess` is ignored by Nginx. Equivalent rules:

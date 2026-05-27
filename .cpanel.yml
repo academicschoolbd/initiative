@@ -1,0 +1,63 @@
+---
+# Smart Maheshkhali — cPanel "Git Version Control" deployment recipe.
+#
+# When this file is present at the root of the repository AND your
+# cPanel host has Git Version Control enabled, every push to the
+# tracked branch can trigger the steps below.
+#
+#   1. cPanel checks out the latest commit into the repository's
+#      virtual working tree (somewhere under ~/repositories/).
+#   2. It then runs `tasks` here from the working tree directory.
+#
+# To activate:
+#   - cPanel  ->  Files  ->  Git Version Control  ->  Create
+#   - Repository path: /home/USERNAME/repositories/initiative
+#   - Clone URL:       https://github.com/academicschoolbd/initiative.git
+#   - Branch:          main           (or your release branch)
+#   - Tick "Pull or Deploy" on the left, then "Manage" -> "Update from
+#     Remote" -> "Deploy HEAD Commit".
+#
+# Adjust the USERNAME and the deploy path below before the first run.
+# `config.php` and the SQLite file are deliberately excluded so live
+# data and secrets are never overwritten by a deploy.
+# ---------------------------------------------------------------------
+
+deployment:
+  tasks:
+    # ---- CHANGE THESE TWO LINES ----------------------------------------
+    - export CPANEL_USER="USERNAME"
+    - export DEPLOYPATH="/home/${CPANEL_USER}/public_html/initiative"
+    # --------------------------------------------------------------------
+
+    # Make sure the target folder exists.
+    - /bin/mkdir -p "${DEPLOYPATH}"
+
+    # Sync the working tree into the public folder, preserving the live
+    # config.php and SQLite database. Trailing slash on the source means
+    # "copy contents of, not the directory itself".
+    - >
+      /usr/bin/rsync -av --delete
+      --exclude='.git/'
+      --exclude='.gitignore'
+      --exclude='.cpanel.yml'
+      --exclude='bin/'
+      --exclude='*.log'
+      --exclude='*.sqlite'
+      --exclude='*.sqlite-journal'
+      --exclude='*.sqlite-wal'
+      --exclude='*.sqlite-shm'
+      --exclude='config.php'
+      ./ "${DEPLOYPATH}/"
+
+    # First-deploy helper: if the operator has not yet copied
+    # config.example.php -> config.php, drop the example into place
+    # so the server returns the configuration-missing splash page
+    # instead of a generic 500.
+    - >
+      test -f "${DEPLOYPATH}/config.php" ||
+      /bin/cp "${DEPLOYPATH}/config.example.php" "${DEPLOYPATH}/config.php"
+
+    # Make sure the directory containing the sqlite file is writable
+    # by the PHP user (cPanel typically runs PHP as the account user,
+    # so 755 is enough; some hosts need 775).
+    - /bin/chmod 755 "${DEPLOYPATH}"
