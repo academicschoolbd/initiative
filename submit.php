@@ -1,68 +1,243 @@
 <?php
-session_start();
-require_once 'database.php';
+/**
+ * Smart Maheshkhali — registration form processor.
+ *
+ * Validates everything server-side, enforces pilot quotas and subdomain
+ * uniqueness, applies a per-IP cooldown, and logs every accepted
+ * submission for audit. On any failure the user is sent back to the
+ * form with all previously-entered values preserved.
+ */
+
+declare(strict_types=1);
+require_once __DIR__ . '/includes/bootstrap.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: index');
-    exit();
+    redirect('/index.php');
 }
 
-// ব্যাকএন্ড সিকিউরিটি চেক: এডমিন ফর্ম অফ রাখলে ডেটা সাবমিট হবে না
+csrf_check();
+
+// Backend re-check of the on/off toggle so that submissions can't slip
+// through if an admin closes the form between page-load and submit.
 $stmt = $db->prepare("SELECT value FROM settings WHERE key = 'form_enabled'");
 $stmt->execute();
 if ($stmt->fetchColumn() !== '1') {
-    die("Submission rejected: The registration portal is currently closed.");
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo "Submission rejected: registration is currently closed.";
+    exit;
 }
 
+// Honeypot. Any value at all = bot. Pretend success without writing.
+if (input('website_url') !== '') {
+    error_log('[Smart Maheshkhali] Honeypot triggered from ' . client_ip());
+    redirect('/success.php');
+}
+
+// Per-IP cooldown.
+$cooldown = (int) ($CONFIG['submission_cooldown_seconds'] ?? 60);
+if ($cooldown > 0) {
+    $ip = client_ip();
+    $check = $db->prepare(
+        "SELECT created_at FROM submission_log
+          WHERE ip_address = ?
+          ORDER BY created_at DESC LIMIT 1"
+    );
+    $check->execute([$ip]);
+    $lastAt = $check->fetchColumn();
+    if ($lastAt) {
+        $elapsed = time() - strtotime($lastAt . ' UTC');
+        if ($elapsed >= 0 && $elapsed < $cooldown) {
+            $_SESSION['form_errors'] = [
+                'অনুগ্রহ করে কিছুক্ষণ পরে আবার চেষ্টা করুন। (Submissions are throttled per IP.)',
+            ];
+            $_SESSION['old_input'] = $_POST;
+            redirect('/index.php');
+        }
+    }
+}
+
+// ---------------------------------------------------------------------
+// Collect raw input (UTF-8 safe). No filter_input — we escape on output.
+// ---------------------------------------------------------------------
+$institution_type = input('institution_type');
+$school_name      = input('school_name');
+$school_name_bn   = input('school_name_bn');
+$subdomain        = strtolower(input('subdomain'));
+$union_name       = input('union_name');
+$detailed_address = input('detailed_address');
+$latitude         = input('latitude');
+$longitude        = input('longitude');
+$owner_name       = input('owner_name');
+$owner_phone_raw  = input('owner_phone');
+$owner_email      = input('owner_email');
+$notes            = input('notes');
+$terms_accept     = !empty($_POST['terms_accept']);
+
+// Length caps to prevent abusive payloads.
+$caps = [
+    'school_name'      => 200,
+    'school_name_bn'   => 200,
+    'union_name'       => 100,
+    'detailed_address' => 500,
+    'owner_name'       => 150,
+    'notes'            => 2000,
+    'owner_email'      => 254,
+];
+foreach ($caps as $field => $max) {
+    if (mb_strlen($$field) > $max) {
+        $$field = mb_substr($$field, 0, $max);
+    }
+}
+
+// ---------------------------------------------------------------------
+// Validation
+// ---------------------------------------------------------------------
 $errors = [];
+$validTypes = ['primary', 'madrasah', 'high_school'];
 
-// ইনপুট স্যানিটাইজেশন এবং রিসিভ প্রসেস
-$institution_type = filter_input(INPUT_POST, 'institution_type', FILTER_SANITIZE_SPECIAL_CHARS);
-$school_name      = trim(filter_input(INPUT_POST, 'school_name', FILTER_SANITIZE_SPECIAL_CHARS));
-$school_name_bn   = trim(filter_input(INPUT_POST, 'school_name_bn', FILTER_SANITIZE_SPECIAL_CHARS));
-$subdomain        = strtolower(trim(filter_input(INPUT_POST, 'subdomain', FILTER_SANITIZE_SPECIAL_CHARS)));
-$union_name       = filter_input(INPUT_POST, 'union_name', FILTER_SANITIZE_SPECIAL_CHARS);
-$detailed_address = trim(filter_input(INPUT_POST, 'detailed_address', FILTER_SANITIZE_SPECIAL_CHARS));
-$latitude         = trim(filter_input(INPUT_POST, 'latitude', FILTER_SANITIZE_SPECIAL_CHARS));
-$longitude        = trim(filter_input(INPUT_POST, 'longitude', FILTER_SANITIZE_SPECIAL_CHARS));
-$owner_name       = trim(filter_input(INPUT_POST, 'owner_name', FILTER_SANITIZE_SPECIAL_CHARS));
-$owner_phone      = trim(filter_input(INPUT_POST, 'owner_phone', FILTER_SANITIZE_SPECIAL_CHARS));
-$owner_email      = filter_input(INPUT_POST, 'owner_email', FILTER_VALIDATE_EMAIL);
-$notes            = trim(filter_input(INPUT_POST, 'notes', FILTER_SANITIZE_SPECIAL_CHARS));
-$terms_accept     = filter_input(INPUT_POST, 'terms_accept', FILTER_VALIDATE_INT);
+if (!in_array($institution_type, $validTypes, true)) {
+    $errors[] = 'প্রতিষ্ঠানের ধরন নির্বাচন করা বাধ্যতামূলক।';
+}
 
-// ভ্যালিডেশন রুলস চেক
-if (empty($institution_type)) $errors[] = "প্রতিষ্ঠানের ধরন নির্বাচন করা বাধ্যতামূলক।";
-if (empty($school_name)) $errors[] = "English School name is required.";
-if (empty($subdomain) || !preg_match('/^[a-z0-9_-]{3,64}$/', $subdomain)) $errors[] = "সঠিক সাবডোমেন ফরম্যাট সাবমিট করুন।";
-if (empty($union_name)) $errors[] = "ইউনিয়ন নির্বাচন করা বাধ্যতামূলক।";
-if (empty($detailed_address)) $errors[] = "বিস্তারিত ঠিকানা প্রদান করা আবশ্যক।";
-if (empty($owner_name)) $errors[] = "যোগাযোগকারী ব্যক্তির নাম প্রদান করা আবশ্যক।";
-if (empty($owner_phone) || !preg_match('/^(?:\+88|88)?(01[3-9]\d{8})$/', $owner_phone)) $errors[] = "সঠিক ১১-ডিজিটের মোবাইল নম্বর প্রদান করুন।";
-if (!$owner_email) $errors[] = "একটি বৈধ ইমেইল এড্রেস প্রদান করুন।";
-if (!$terms_accept) $errors[] = "শর্তাবলীতে সম্মতি প্রদান করা বাধ্যতামূলক।";
+if ($school_name === '') {
+    $errors[] = 'English school name is required.';
+} elseif (mb_strlen($school_name) < 3) {
+    $errors[] = 'প্রতিষ্ঠানের নাম খুব ছোট।';
+}
 
-// ভুল থাকলে ইনডেক্স ফর্মে ফেরত পাঠানো
-if (!empty($errors)) {
+if ($subdomain === '') {
+    $errors[] = 'সাবডোমেন প্রদান করা বাধ্যতামূলক।';
+} elseif (!is_valid_subdomain($subdomain)) {
+    $errors[] = 'সাবডোমেন ৩-৩২ অক্ষরের, শুধুমাত্র lowercase letters, digits ও hyphen দিয়ে গঠিত হতে হবে।';
+} elseif (is_reserved_subdomain($subdomain)) {
+    $errors[] = 'এই সাবডোমেনটি সংরক্ষিত। ভিন্ন একটি বেছে নিন।';
+}
+
+if ($union_name === '') {
+    $errors[] = 'ইউনিয়ন নির্বাচন করা বাধ্যতামূলক।';
+}
+
+if ($detailed_address === '') {
+    $errors[] = 'বিস্তারিত ঠিকানা প্রদান করা আবশ্যক।';
+}
+
+// Lat/lng are optional but if provided must parse as numbers in range.
+if ($latitude !== '' && !preg_match('/^-?\d{1,3}(\.\d{1,12})?$/', $latitude)) {
+    $errors[] = 'অক্ষাংশ (latitude) মান সঠিক নয়।';
+    $latitude = '';
+} elseif ($latitude !== '' && ((float) $latitude < -90 || (float) $latitude > 90)) {
+    $errors[] = 'অক্ষাংশ -90 থেকে 90 এর মধ্যে হতে হবে।';
+    $latitude = '';
+}
+if ($longitude !== '' && !preg_match('/^-?\d{1,3}(\.\d{1,12})?$/', $longitude)) {
+    $errors[] = 'দ্রাঘিমাংশ (longitude) মান সঠিক নয়।';
+    $longitude = '';
+} elseif ($longitude !== '' && ((float) $longitude < -180 || (float) $longitude > 180)) {
+    $errors[] = 'দ্রাঘিমাংশ -180 থেকে 180 এর মধ্যে হতে হবে।';
+    $longitude = '';
+}
+
+if ($owner_name === '') {
+    $errors[] = 'যোগাযোগকারী ব্যক্তির নাম প্রদান করা আবশ্যক।';
+}
+
+$owner_phone = $owner_phone_raw === '' ? null : normalise_phone($owner_phone_raw);
+if ($owner_phone === null) {
+    $errors[] = 'সঠিক ১১-ডিজিটের বাংলাদেশী মোবাইল নম্বর প্রদান করুন।';
+}
+
+$validatedEmail = filter_var($owner_email, FILTER_VALIDATE_EMAIL);
+if (!$validatedEmail) {
+    $errors[] = 'একটি বৈধ ইমেইল এড্রেস প্রদান করুন।';
+}
+
+if (!$terms_accept) {
+    $errors[] = 'শর্তাবলীতে সম্মতি প্রদান করা বাধ্যতামূলক।';
+}
+
+// Quota and uniqueness checks only if everything else looks sane.
+if (!$errors) {
+    $quotas = (array) ($CONFIG['quotas'] ?? []);
+    $limit  = (int) ($quotas[$institution_type] ?? 0);
+    if ($limit > 0) {
+        $countStmt = $db->prepare(
+            'SELECT COUNT(*) FROM registrations WHERE institution_type = ?'
+        );
+        $countStmt->execute([$institution_type]);
+        if ((int) $countStmt->fetchColumn() >= $limit) {
+            $errors[] = sprintf(
+                'এই ধরনের প্রতিষ্ঠানের জন্য পাইলট কোটা পূর্ণ হয়ে গেছে (%d/%d)।',
+                $limit,
+                $limit
+            );
+        }
+    }
+
+    $dupe = $db->prepare('SELECT id FROM registrations WHERE subdomain = ?');
+    $dupe->execute([$subdomain]);
+    if ($dupe->fetchColumn()) {
+        $errors[] = 'এই সাবডোমেনটি ইতিমধ্যে নিবন্ধিত। অনুগ্রহ করে অন্য একটি বেছে নিন।';
+    }
+}
+
+if ($errors) {
     $_SESSION['form_errors'] = $errors;
-    $_SESSION['old_input'] = $_POST;
-    header('Location: index');
-    exit();
+    $_SESSION['old_input']   = $_POST;
+    redirect('/index.php');
 }
 
+// ---------------------------------------------------------------------
+// Persist
+// ---------------------------------------------------------------------
 try {
-    // পিএইচপি পিডিও (PDO) বাইন্ডিং গেটওয়ে
-    $stmt = $db->prepare("INSERT INTO registrations (institution_type, school_name, school_name_bn, subdomain, union_name, detailed_address, latitude, longitude, owner_name, owner_phone, owner_email, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$institution_type, $school_name, $school_name_bn, $subdomain, $union_name, $detailed_address, $latitude, $longitude, $owner_name, $owner_phone, $owner_email, $notes]);
-    
-    $_SESSION['submission_success'] = [
-        'school' => $school_name,
-        'subdomain' => $subdomain . '.smartschool.bd'
-    ];
-    header('Location: success');
-    exit();
+    $db->beginTransaction();
+
+    $insert = $db->prepare(
+        'INSERT INTO registrations
+            (institution_type, school_name, school_name_bn, subdomain,
+             union_name, detailed_address, latitude, longitude,
+             owner_name, owner_phone, owner_email, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    );
+    $insert->execute([
+        $institution_type,
+        $school_name,
+        $school_name_bn,
+        $subdomain,
+        $union_name,
+        $detailed_address,
+        $latitude,
+        $longitude,
+        $owner_name,
+        $owner_phone,
+        $validatedEmail,
+        $notes,
+    ]);
+
+    $log = $db->prepare('INSERT INTO submission_log (ip_address) VALUES (?)');
+    $log->execute([client_ip()]);
+
+    $db->commit();
 } catch (PDOException $e) {
-    $_SESSION['form_errors'] = ["সিস্টেম ক্র্যাশ ত্রুটি: " . $e->getMessage()];
-    header('Location: index');
-    exit();
+    if ($db->inTransaction()) {
+        $db->rollBack();
+    }
+    error_log('[Smart Maheshkhali] Insert failed: ' . $e->getMessage());
+
+    // Race condition: someone grabbed the same subdomain between our
+    // duplicate check and the INSERT. The unique index catches it.
+    $msg = 'সিস্টেমে কারিগরি ত্রুটি হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।';
+    if ($e->getCode() === '23000' || stripos($e->getMessage(), 'unique') !== false) {
+        $msg = 'এই সাবডোমেনটি ইতিমধ্যে নিবন্ধিত। অনুগ্রহ করে অন্য একটি বেছে নিন।';
+    }
+    $_SESSION['form_errors'] = [$msg];
+    $_SESSION['old_input']   = $_POST;
+    redirect('/index.php');
 }
+
+$_SESSION['submission_success'] = [
+    'school'    => $school_name,
+    'subdomain' => $subdomain . '.smartschool.bd',
+];
+redirect('/success.php');

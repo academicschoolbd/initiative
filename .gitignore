@@ -1,0 +1,19 @@
+# Local configuration (contains admin password hash) — never commit
+config.php
+
+# SQLite runtime data
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# PHP / IDE / OS
+*.log
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Composer (in case it gets added later)
+/vendor/
+composer.lock
