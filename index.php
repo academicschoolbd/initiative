@@ -1,18 +1,20 @@
 <?php
 /**
- * Smart Maheshkhali — public registration form (bd.education-style layout).
+ * Smart Maheshkhali - public registration form (bd.education-style layout).
  *
- * 3-step wizard:
- *   Step 1 — Contact person          (যোগাযোগের তথ্য)
- *   Step 2 — Institution + Location  (প্রতিষ্ঠানের তথ্য)
- *   Step 3 — Domain + Vision         (অন্যান্য তথ্য)
+ * 5-step wizard:
+ *   Step 1 - Head Teacher / Contact   (প্রধান শিক্ষকের তথ্য)
+ *   Step 2 - Institution Basic Info   (প্রতিষ্ঠানের মৌলিক তথ্য)
+ *   Step 3 - Address & Location       (ঠিকানা ও অবস্থান)
+ *   Step 4 - Infrastructure & Students(অবকাঠামো ও শিক্ষার্থী)
+ *   Step 5 - Technology & Vision      (প্রযুক্তি ও লক্ষ্য)
  *
  * Falls back to a long scrollable form if JavaScript is disabled.
  */
 declare(strict_types=1);
 require_once __DIR__ . '/includes/bootstrap.php';
 
-// Honour the on/off toggle — admin can close intake at any time.
+// Honour the on/off toggle - admin can close intake at any time.
 $stmt = $db->prepare("SELECT value FROM settings WHERE key = 'form_enabled'");
 $stmt->execute();
 $formEnabled = $stmt->fetchColumn() === '1';
@@ -227,7 +229,7 @@ $o = function (string $key, string $default = '') use ($old): string {
         .bd-btn-arrow { font-size:1.05rem; line-height:1; }
 
         /* -----------------------------------------------------------
-           Geo-fetch button (custom for this project)
+           Geo-fetch button
            ----------------------------------------------------------- */
         .bd-geo { background:#f1f5f9; color:#334155; border:1px solid var(--border);
                   padding:9px 14px; border-radius:8px; font-size:.84rem; font-weight:600;
@@ -258,6 +260,16 @@ $o = function (string $key, string $default = '') use ($old): string {
                  opacity:0; pointer-events:none; }
 
         .bd-footer-link { text-align:center; margin-top:22px; font-size:.82rem; color:var(--muted); }
+
+        /* -----------------------------------------------------------
+           Class-wise student grid (5 columns desktop, 2 mobile)
+           ----------------------------------------------------------- */
+        .bd-class-grid { display:grid; grid-template-columns:repeat(5, 1fr); gap:10px;
+                         grid-column:1/-1; }
+        @media (max-width:600px) { .bd-class-grid { grid-template-columns:repeat(2, 1fr); } }
+        .bd-class-grid .bd-field { gap:4px; }
+        .bd-class-grid .bd-label { font-size:.78rem; }
+        .bd-class-grid .bd-input { padding:8px 10px; font-size:.88rem; }
     </style>
 </head>
 <body>
@@ -275,7 +287,7 @@ $o = function (string $key, string $default = '') use ($old): string {
             <span class="bd-stepper-num">1</span>
             <span class="bd-stepper-label">
                 <strong>Contact</strong>
-                <small lang="bn">যোগাযোগের তথ্য</small>
+                <small lang="bn">প্রধান শিক্ষক</small>
             </span>
         </div>
         <div class="bd-stepper-line"></div>
@@ -283,15 +295,31 @@ $o = function (string $key, string $default = '') use ($old): string {
             <span class="bd-stepper-num">2</span>
             <span class="bd-stepper-label">
                 <strong>Institution</strong>
-                <small lang="bn">প্রতিষ্ঠানের তথ্য</small>
+                <small lang="bn">প্রতিষ্ঠান</small>
             </span>
         </div>
         <div class="bd-stepper-line"></div>
         <div class="bd-stepper-item" data-bd-step-indicator="3">
             <span class="bd-stepper-num">3</span>
             <span class="bd-stepper-label">
-                <strong>Other info</strong>
-                <small lang="bn">অন্যান্য তথ্য</small>
+                <strong>Address</strong>
+                <small lang="bn">ঠিকানা</small>
+            </span>
+        </div>
+        <div class="bd-stepper-line"></div>
+        <div class="bd-stepper-item" data-bd-step-indicator="4">
+            <span class="bd-stepper-num">4</span>
+            <span class="bd-stepper-label">
+                <strong>Infrastructure</strong>
+                <small lang="bn">অবকাঠামো</small>
+            </span>
+        </div>
+        <div class="bd-stepper-line"></div>
+        <div class="bd-stepper-item" data-bd-step-indicator="5">
+            <span class="bd-stepper-num">5</span>
+            <span class="bd-stepper-label">
+                <strong>Technology</strong>
+                <small lang="bn">প্রযুক্তি</small>
             </span>
         </div>
     </nav>
@@ -309,15 +337,15 @@ $o = function (string $key, string $default = '') use ($old): string {
 
     <form action="<?= e(url('/submit.php')) ?>" method="POST" id="bd-form" novalidate>
         <?= csrf_field() ?>
-        <!-- Honeypot — only bots fill this field. -->
+        <!-- Honeypot -->
         <div class="bd-hp" aria-hidden="true">
             <label for="website_url">Leave this empty</label>
             <input type="text" id="website_url" name="website_url" tabindex="-1" autocomplete="off">
         </div>
 
-        <!-- ============ Step 1 — Contact (যোগাযোগের তথ্য) ============ -->
+        <!-- ============ Step 1 - Head Teacher / Contact ============ -->
         <section class="bd-step is-active" data-bd-step="1">
-            <p class="bd-step-helper" lang="bn">সঠিক তথ্য দিয়ে পূরণ করুন</p>
+            <p class="bd-step-helper" lang="bn">প্রধান শিক্ষক / প্রিন্সিপালের তথ্য পূরণ করুন</p>
 
             <div class="bd-grid">
                 <div class="bd-section bd-section--pink">
@@ -329,23 +357,23 @@ $o = function (string $key, string $default = '') use ($old): string {
                         </svg>
                     </span>
                     <span class="bd-section-title">
-                        Contact person
-                        <small lang="bn">যোগাযোগের তথ্য</small>
+                        Head Teacher / Principal
+                        <small lang="bn">প্রধান শিক্ষকের তথ্য</small>
                     </span>
                 </div>
 
                 <div class="bd-field bd-field--span-2">
                     <label class="bd-label" for="owner_name">
-                        Your full name <span class="req">*</span>
+                        Head Teacher / Principal Name (প্রধান শিক্ষকের নাম) <span class="req">*</span>
                     </label>
                     <input class="bd-input" id="owner_name" name="owner_name" required
                            value="<?= $o('owner_name') ?>"
-                           placeholder="Headmaster / Principal name">
+                           placeholder="প্রধান শিক্ষকের পূর্ণ নাম">
                 </div>
 
                 <div class="bd-field">
                     <label class="bd-label" for="owner_phone">
-                        WhatsApp / Mobile <span class="req">*</span>
+                        Mobile Number (মোবাইল নম্বর) <span class="req">*</span>
                     </label>
                     <input class="bd-input" id="owner_phone" type="tel" name="owner_phone" required
                            inputmode="tel" maxlength="20"
@@ -353,26 +381,53 @@ $o = function (string $key, string $default = '') use ($old): string {
                 </div>
 
                 <div class="bd-field">
+                    <label class="bd-label" for="head_teacher_whatsapp">
+                        WhatsApp Number (হোয়াটসঅ্যাপ নম্বর)
+                    </label>
+                    <input class="bd-input" id="head_teacher_whatsapp" type="tel" name="head_teacher_whatsapp"
+                           inputmode="tel" maxlength="20"
+                           value="<?= $o('head_teacher_whatsapp') ?>" placeholder="01XXXXXXXXX">
+                </div>
+
+                <div class="bd-field bd-field--span-2">
                     <label class="bd-label" for="owner_email">
-                        Official email <span class="req">*</span>
+                        Email Address (ইমেইল) <span class="req">*</span>
                     </label>
                     <input class="bd-input" id="owner_email" type="email" name="owner_email" required
                            value="<?= $o('owner_email') ?>" placeholder="you@school.edu.bd">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="managing_committee_chairman">
+                        Managing Committee Chairman (ম্যানেজিং কমিটির সভাপতি)
+                    </label>
+                    <input class="bd-input" id="managing_committee_chairman" name="managing_committee_chairman"
+                           value="<?= $o('managing_committee_chairman') ?>"
+                           placeholder="সভাপতির নাম">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="managing_committee_phone">
+                        Chairman's Mobile (সভাপতির মোবাইল)
+                    </label>
+                    <input class="bd-input" id="managing_committee_phone" type="tel" name="managing_committee_phone"
+                           inputmode="tel" maxlength="20"
+                           value="<?= $o('managing_committee_phone') ?>" placeholder="01XXXXXXXXX">
                 </div>
             </div>
 
             <div class="bd-step-nav">
                 <span></span>
                 <button type="button" class="bd-btn" data-bd-next="2">
-                    পরবর্তী &nbsp;·&nbsp; Next
-                    <span class="bd-btn-arrow" aria-hidden="true">→</span>
+                    পরবর্তী &nbsp;&middot;&nbsp; Next
+                    <span class="bd-btn-arrow" aria-hidden="true">&#8594;</span>
                 </button>
             </div>
         </section>
 
-        <!-- ============ Step 2 — Institution (প্রতিষ্ঠানের তথ্য) ============ -->
+        <!-- ============ Step 2 - Institution Info ============ -->
         <section class="bd-step" data-bd-step="2">
-            <p class="bd-step-helper" lang="bn">সঠিক তথ্য দিয়ে পূরণ করুন</p>
+            <p class="bd-step-helper" lang="bn">প্রতিষ্ঠানের মৌলিক তথ্য পূরণ করুন</p>
 
             <div class="bd-grid">
                 <div class="bd-section">
@@ -383,26 +438,22 @@ $o = function (string $key, string $default = '') use ($old): string {
                         </svg>
                     </span>
                     <span class="bd-section-title">
-                        Institution
-                        <small lang="bn">প্রতিষ্ঠানের তথ্য</small>
+                        Institution Basic Info
+                        <small lang="bn">প্রতিষ্ঠানের মৌলিক তথ্য</small>
                     </span>
                 </div>
 
                 <div class="bd-field">
                     <label class="bd-label" for="institution_type">
-                        Type of institute <span class="req">*</span>
+                        Type of Institute (প্রতিষ্ঠানের ধরন) <span class="req">*</span>
                     </label>
                     <select class="bd-select" id="institution_type" name="institution_type" required>
-                        <option value="">— Select —</option>
+                        <option value="">-- নির্বাচন করুন --</option>
                         <?php
-                        $types = [
-                            'primary'     => 'প্রাথমিক বিদ্যালয় / Primary',
-                            'madrasah'    => 'মাদ্রাসা / Madrasah',
-                            'high_school' => 'মাধ্যমিক বিদ্যালয় / High School',
-                        ];
-                        $sel = (string) ($old['institution_type'] ?? '');
-                        foreach ($types as $code => $label): ?>
-                            <option value="<?= e($code) ?>" <?= $sel === $code ? 'selected' : '' ?>>
+                        $instTypes = institution_types();
+                        $selType = (string) ($old['institution_type'] ?? '');
+                        foreach ($instTypes as $code => $label): ?>
+                            <option value="<?= e($code) ?>" <?= $selType === $code ? 'selected' : '' ?>>
                                 <?= e($label) ?>
                             </option>
                         <?php endforeach; ?>
@@ -410,18 +461,23 @@ $o = function (string $key, string $default = '') use ($old): string {
                 </div>
 
                 <div class="bd-field">
-                    <label class="bd-label" for="union-selector">
-                        Union <small lang="bn">(ইউনিয়ন)</small> <span class="req">*</span>
+                    <label class="bd-label" for="mpo_status">
+                        MPO Status (এমপিও স্ট্যাটাস) <span class="req">*</span>
                     </label>
-                    <select class="bd-select" id="union-selector" name="union_name" required
-                            data-prev="<?= $o('union_name') ?>">
-                        <option value="">ইউনিয়ন লোড হচ্ছে...</option>
+                    <select class="bd-select" id="mpo_status" name="mpo_status" required>
+                        <option value="">-- নির্বাচন করুন --</option>
+                        <?php
+                        $mpoOptions = ['mpo' => 'MPO ভুক্ত (MPO)', 'non_mpo' => 'নন-এমপিও (Non-MPO)', 'newly_nationalized' => 'নবজাতীয়করণ (Newly Nationalized)'];
+                        $selMpo = (string) ($old['mpo_status'] ?? '');
+                        foreach ($mpoOptions as $mCode => $mLabel): ?>
+                            <option value="<?= e($mCode) ?>" <?= $selMpo === $mCode ? 'selected' : '' ?>><?= e($mLabel) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
                 <div class="bd-field">
                     <label class="bd-label" for="school_name">
-                        School name (English) <span class="req">*</span>
+                        School Name (English) <span class="req">*</span>
                     </label>
                     <input class="bd-input" id="school_name" name="school_name" required
                            value="<?= $o('school_name') ?>"
@@ -429,63 +485,75 @@ $o = function (string $key, string $default = '') use ($old): string {
                 </div>
 
                 <div class="bd-field">
-                    <label class="bd-label" for="school_name_bn">School name (বাংলা)</label>
+                    <label class="bd-label" for="school_name_bn">
+                        School Name (বাংলা নাম)
+                    </label>
                     <input class="bd-input" id="school_name_bn" name="school_name_bn"
                            value="<?= $o('school_name_bn') ?>"
                            placeholder="যেমন: মহেশখালী সরকারি উচ্চ বিদ্যালয়">
                 </div>
 
-                <div class="bd-field bd-field--span-2">
-                    <label class="bd-label" for="detailed_address">
-                        Detailed address <small lang="bn">(বিস্তারিত ঠিকানা)</small>
-                        <span class="req">*</span>
+                <div class="bd-field">
+                    <label class="bd-label" for="eiin_number">
+                        EIIN Number (ইআইআইএন নম্বর)
                     </label>
-                    <input class="bd-input" id="detailed_address" name="detailed_address" required
-                           value="<?= $o('detailed_address') ?>"
-                           placeholder="গ্রাম, ওয়ার্ড বা সুনির্দিষ্ট অবস্থান">
+                    <input class="bd-input" id="eiin_number" name="eiin_number"
+                           inputmode="numeric" pattern="[0-9]*"
+                           value="<?= $o('eiin_number') ?>" placeholder="যেমন: 104523">
                 </div>
 
                 <div class="bd-field">
-                    <label class="bd-label" for="total_students">
-                        Total students <small lang="bn">(মোট শিক্ষার্থী)</small>
-                        <span class="req">*</span>
+                    <label class="bd-label" for="establishment_year">
+                        Establishment Year (প্রতিষ্ঠার সাল)
                     </label>
-                    <input class="bd-input" id="total_students" name="total_students" required
-                           type="number" inputmode="numeric" min="0" max="20000"
-                           value="<?= $o('total_students') ?>" placeholder="যেমন: 350">
+                    <input class="bd-input" id="establishment_year" name="establishment_year"
+                           type="number" min="1800" max="2025" inputmode="numeric"
+                           value="<?= $o('establishment_year') ?>" placeholder="যেমন: 1985">
                 </div>
 
                 <div class="bd-field">
-                    <label class="bd-label" for="total_teachers">
-                        Total teachers <small lang="bn">(মোট শিক্ষক)</small>
-                        <span class="req">*</span>
+                    <label class="bd-label" for="school_phone">
+                        School Phone (প্রতিষ্ঠানের ফোন)
                     </label>
-                    <input class="bd-input" id="total_teachers" name="total_teachers" required
-                           type="number" inputmode="numeric" min="0" max="2000"
-                           value="<?= $o('total_teachers') ?>" placeholder="যেমন: 18">
+                    <input class="bd-input" id="school_phone" type="tel" name="school_phone"
+                           inputmode="tel"
+                           value="<?= $o('school_phone') ?>" placeholder="01XXXXXXXXX">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="school_email">
+                        School Email (প্রতিষ্ঠানের ইমেইল)
+                    </label>
+                    <input class="bd-input" id="school_email" type="email" name="school_email"
+                           value="<?= $o('school_email') ?>" placeholder="school@example.com">
                 </div>
 
                 <div class="bd-field bd-field--span-2">
-                    <label class="bd-label" id="lbl-ict-teacher">
-                        ICT-experienced teacher to manage the website / app?
-                        <small lang="bn">(ওয়েবসাইট/অ্যাপ পরিচালনার জন্য ICT অভিজ্ঞ শিক্ষক আছেন কি?)</small>
-                        <span class="req">*</span>
+                    <label class="bd-label" for="school_website">
+                        Website (ওয়েবসাইট)
                     </label>
-                    <div role="radiogroup" aria-labelledby="lbl-ict-teacher" class="bd-pills">
-                        <?php $ictPicked = (string) ($old['ict_teacher_available'] ?? ''); ?>
-                        <label class="bd-pill">
-                            <input type="radio" name="ict_teacher_available" value="yes" required
-                                   <?= $ictPicked === 'yes' ? 'checked' : '' ?>>
-                            <span>হ্যাঁ আছেন &nbsp;·&nbsp; Yes</span>
-                        </label>
-                        <label class="bd-pill">
-                            <input type="radio" name="ict_teacher_available" value="no"
-                                   <?= $ictPicked === 'no' ? 'checked' : '' ?>>
-                            <span>না, নেই &nbsp;·&nbsp; No</span>
-                        </label>
-                    </div>
+                    <input class="bd-input" id="school_website" type="url" name="school_website"
+                           value="<?= $o('school_website') ?>" placeholder="https://www.example.com">
                 </div>
+            </div>
 
+            <div class="bd-step-nav">
+                <button type="button" class="bd-btn bd-btn--ghost" data-bd-prev="1">
+                    <span class="bd-btn-arrow" aria-hidden="true">&#8592;</span>
+                    Back &nbsp;&middot;&nbsp; পূর্ববর্তী
+                </button>
+                <button type="button" class="bd-btn" data-bd-next="3">
+                    পরবর্তী &nbsp;&middot;&nbsp; Next
+                    <span class="bd-btn-arrow" aria-hidden="true">&#8594;</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ============ Step 3 - Address & Location ============ -->
+        <section class="bd-step" data-bd-step="3">
+            <p class="bd-step-helper" lang="bn">প্রতিষ্ঠানের ঠিকানা ও অবস্থান</p>
+
+            <div class="bd-grid">
                 <div class="bd-section bd-section--amber">
                     <span class="bd-section-icon" aria-hidden="true">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -495,7 +563,90 @@ $o = function (string $key, string $default = '') use ($old): string {
                         </svg>
                     </span>
                     <span class="bd-section-title">
-                        GPS coordinates <small lang="bn">জিপিএস অবস্থান</small>
+                        Address & Location
+                        <small lang="bn">ঠিকানা ও অবস্থান</small>
+                    </span>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="division">
+                        Division (বিভাগ) <span class="req">*</span>
+                    </label>
+                    <select class="bd-select" id="division" name="division" required>
+                        <?php
+                        $divisions = ['ঢাকা', 'চট্টগ্রাম', 'রাজশাহী', 'খুলনা', 'বরিশাল', 'সিলেট', 'রংপুর', 'ময়মনসিংহ'];
+                        $selDiv = (string) ($old['division'] ?? 'চট্টগ্রাম');
+                        foreach ($divisions as $div): ?>
+                            <option value="<?= e($div) ?>" <?= $selDiv === $div ? 'selected' : '' ?>><?= e($div) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="district">
+                        District (জেলা) <span class="req">*</span>
+                    </label>
+                    <select class="bd-select" id="district" name="district" required>
+                        <option value="কক্সবাজার" selected>কক্সবাজার</option>
+                    </select>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="upazila">
+                        Upazila (উপজেলা) <span class="req">*</span>
+                    </label>
+                    <select class="bd-select" id="upazila" name="upazila" required>
+                        <option value="মহেশখালী" selected>মহেশখালী</option>
+                    </select>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="union-selector">
+                        Union (ইউনিয়ন) <span class="req">*</span>
+                    </label>
+                    <select class="bd-select" id="union-selector" name="union_name" required
+                            data-prev="<?= $o('union_name') ?>">
+                        <option value="">ইউনিয়ন লোড হচ্ছে...</option>
+                    </select>
+                    <input type="hidden" name="union_ward" id="union_ward" value="<?= $o('union_ward') ?>">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="village">
+                        Village/Mohalla (গ্রাম/মহল্লা)
+                    </label>
+                    <input class="bd-input" id="village" name="village"
+                           value="<?= $o('village') ?>" placeholder="গ্রাম বা মহল্লার নাম">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="postal_code">
+                        Postal Code (পোস্ট কোড)
+                    </label>
+                    <input class="bd-input" id="postal_code" name="postal_code"
+                           value="<?= $o('postal_code') ?>" placeholder="যেমন: 4760">
+                </div>
+
+                <div class="bd-field bd-field--span-2">
+                    <label class="bd-label" for="detailed_address">
+                        Detailed Address (বিস্তারিত ঠিকানা) <span class="req">*</span>
+                    </label>
+                    <input class="bd-input" id="detailed_address" name="detailed_address" required
+                           value="<?= $o('detailed_address') ?>"
+                           placeholder="গ্রাম, ওয়ার্ড বা সুনির্দিষ্ট অবস্থান">
+                </div>
+
+                <div class="bd-section bd-section--green">
+                    <span class="bd-section-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2v4M12 18v4M4 12h4M16 12h4"/>
+                        </svg>
+                    </span>
+                    <span class="bd-section-title">
+                        GPS Coordinates
+                        <small lang="bn">জিপিএস অবস্থান</small>
                     </span>
                 </div>
 
@@ -524,90 +675,432 @@ $o = function (string $key, string $default = '') use ($old): string {
             </div>
 
             <div class="bd-step-nav">
-                <button type="button" class="bd-btn bd-btn--ghost" data-bd-prev="1">
-                    <span class="bd-btn-arrow" aria-hidden="true">←</span>
-                    Back &nbsp;·&nbsp; পূর্ববর্তী
+                <button type="button" class="bd-btn bd-btn--ghost" data-bd-prev="2">
+                    <span class="bd-btn-arrow" aria-hidden="true">&#8592;</span>
+                    Back &nbsp;&middot;&nbsp; পূর্ববর্তী
                 </button>
-                <button type="button" class="bd-btn" data-bd-next="3">
-                    পরবর্তী &nbsp;·&nbsp; Next
-                    <span class="bd-btn-arrow" aria-hidden="true">→</span>
+                <button type="button" class="bd-btn" data-bd-next="4">
+                    পরবর্তী &nbsp;&middot;&nbsp; Next
+                    <span class="bd-btn-arrow" aria-hidden="true">&#8594;</span>
                 </button>
             </div>
         </section>
 
-        <!-- ============ Step 3 — Other info (অন্যান্য তথ্য) ============ -->
-        <section class="bd-step" data-bd-step="3">
-            <p class="bd-step-helper" lang="bn">সঠিক তথ্য দিয়ে পূরণ করুন</p>
+        <!-- ============ Step 4 - Infrastructure & Students ============ -->
+        <section class="bd-step" data-bd-step="4">
+            <p class="bd-step-helper" lang="bn">অবকাঠামো ও শিক্ষার্থী সম্পর্কিত তথ্য</p>
 
-            <div class="bd-section bd-section--green bd-section--standalone">
-                <span class="bd-section-icon" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>
-                    </svg>
-                </span>
-                <span class="bd-section-title">
-                    Website domain <small lang="bn">আপনার ওয়েবসাইটের ঠিকানা</small>
-                </span>
-            </div>
-
-            <div class="bd-field" style="margin-top:14px;">
-                <label class="bd-label" for="subdomain">
-                    Short name / prefix for your website domain
-                    <span class="req">*</span>
-                </label>
-                <div class="bd-subdomain">
-                    <span class="bd-fix">www.</span>
-                    <input id="subdomain" name="subdomain" required
-                           pattern="[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])"
-                           minlength="3" maxlength="32"
-                           value="<?= $o('subdomain') ?>" placeholder="example: mghs"
-                           autocapitalize="off" autocomplete="off" spellcheck="false"
-                           data-bd-subdomain>
-                    <span class="bd-fix bd-fix--suffix">.smartschool.bd</span>
+            <div class="bd-grid">
+                <div class="bd-section">
+                    <span class="bd-section-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>
+                        </svg>
+                    </span>
+                    <span class="bd-section-title">
+                        Infrastructure
+                        <small lang="bn">অবকাঠামো</small>
+                    </span>
                 </div>
-                <small class="bd-hint">
-                    Lowercase letters, digits and hyphens only. Min 3, max 32 characters.
-                </small>
-                <div class="bd-domain-preview bd-domain-preview--empty" data-bd-preview>
-                    <span lang="bn">আপনার ওয়েবসাইট হবে :</span>
-                    <span class="bd-domain-preview-url" data-bd-preview-url>your-name.smartschool.bd</span>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="num_buildings">
+                        Number of Buildings (ভবন সংখ্যা)
+                    </label>
+                    <input class="bd-input" id="num_buildings" name="num_buildings"
+                           type="number" min="0" inputmode="numeric"
+                           value="<?= $o('num_buildings') ?>" placeholder="যেমন: 3">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="num_classrooms">
+                        Number of Classrooms (শ্রেণীকক্ষ সংখ্যা)
+                    </label>
+                    <input class="bd-input" id="num_classrooms" name="num_classrooms"
+                           type="number" min="0" inputmode="numeric"
+                           value="<?= $o('num_classrooms') ?>" placeholder="যেমন: 12">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" id="lbl-computer-lab">
+                        Computer Lab (কম্পিউটার ল্যাব)
+                    </label>
+                    <div role="radiogroup" aria-labelledby="lbl-computer-lab" class="bd-pills">
+                        <?php $compLab = (string) ($old['has_computer_lab'] ?? ''); ?>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_computer_lab" value="yes" <?= $compLab === 'yes' ? 'checked' : '' ?>>
+                            <span>হ্যাঁ (Yes)</span>
+                        </label>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_computer_lab" value="no" <?= $compLab === 'no' ? 'checked' : '' ?>>
+                            <span>না (No)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" id="lbl-science-lab">
+                        Science Lab (বিজ্ঞানাগার)
+                    </label>
+                    <div role="radiogroup" aria-labelledby="lbl-science-lab" class="bd-pills">
+                        <?php $sciLab = (string) ($old['has_science_lab'] ?? ''); ?>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_science_lab" value="yes" <?= $sciLab === 'yes' ? 'checked' : '' ?>>
+                            <span>হ্যাঁ (Yes)</span>
+                        </label>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_science_lab" value="no" <?= $sciLab === 'no' ? 'checked' : '' ?>>
+                            <span>না (No)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" id="lbl-library">
+                        Library (লাইব্রেরি)
+                    </label>
+                    <div role="radiogroup" aria-labelledby="lbl-library" class="bd-pills">
+                        <?php $lib = (string) ($old['has_library'] ?? ''); ?>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_library" value="yes" <?= $lib === 'yes' ? 'checked' : '' ?>>
+                            <span>হ্যাঁ (Yes)</span>
+                        </label>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_library" value="no" <?= $lib === 'no' ? 'checked' : '' ?>>
+                            <span>না (No)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" id="lbl-playground">
+                        Playground (খেলার মাঠ)
+                    </label>
+                    <div role="radiogroup" aria-labelledby="lbl-playground" class="bd-pills">
+                        <?php $pg = (string) ($old['has_playground'] ?? ''); ?>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_playground" value="yes" <?= $pg === 'yes' ? 'checked' : '' ?>>
+                            <span>হ্যাঁ (Yes)</span>
+                        </label>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_playground" value="no" <?= $pg === 'no' ? 'checked' : '' ?>>
+                            <span>না (No)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bd-section bd-section--pink">
+                    <span class="bd-section-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                    </span>
+                    <span class="bd-section-title">
+                        Student Info
+                        <small lang="bn">শিক্ষার্থী তথ্য</small>
+                    </span>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="total_students">
+                        Total Students (মোট শিক্ষার্থী) <span class="req">*</span>
+                    </label>
+                    <input class="bd-input" id="total_students" name="total_students" required
+                           type="number" inputmode="numeric" min="0" max="20000"
+                           value="<?= $o('total_students') ?>" placeholder="যেমন: 350">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="total_students_boys">
+                        Boys (ছাত্র)
+                    </label>
+                    <input class="bd-input" id="total_students_boys" name="total_students_boys"
+                           type="number" inputmode="numeric" min="0"
+                           value="<?= $o('total_students_boys') ?>" placeholder="ছাত্র সংখ্যা">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="total_students_girls">
+                        Girls (ছাত্রী)
+                    </label>
+                    <input class="bd-input" id="total_students_girls" name="total_students_girls"
+                           type="number" inputmode="numeric" min="0"
+                           value="<?= $o('total_students_girls') ?>" placeholder="ছাত্রী সংখ্যা">
+                </div>
+
+                <!-- Class-wise student grid -->
+                <div class="bd-field bd-field--span-2" style="margin-top:6px;">
+                    <label class="bd-label">Class-wise Students (শ্রেণী অনুযায়ী শিক্ষার্থী)</label>
+                </div>
+                <div class="bd-class-grid">
+                    <?php
+                    $bnDigits = ['১ম', '২য়', '৩য়', '৪র্থ', '৫ম', '৬ষ্ঠ', '৭ম', '৮ম', '৯ম', '১০ম'];
+                    for ($i = 1; $i <= 10; $i++): ?>
+                    <div class="bd-field">
+                        <label class="bd-label" for="students_class_<?= $i ?>">Class <?= $i ?> (<?= $bnDigits[$i - 1] ?>)</label>
+                        <input class="bd-input" id="students_class_<?= $i ?>" name="students_class_<?= $i ?>"
+                               type="number" inputmode="numeric" min="0"
+                               value="<?= $o('students_class_' . $i) ?>" placeholder="0">
+                    </div>
+                    <?php endfor; ?>
+                </div>
+
+                <div class="bd-section bd-section--green">
+                    <span class="bd-section-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </span>
+                    <span class="bd-section-title">
+                        Teacher Info
+                        <small lang="bn">শিক্ষক তথ্য</small>
+                    </span>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="total_teachers">
+                        Total Teachers (মোট শিক্ষক) <span class="req">*</span>
+                    </label>
+                    <input class="bd-input" id="total_teachers" name="total_teachers" required
+                           type="number" inputmode="numeric" min="0" max="2000"
+                           value="<?= $o('total_teachers') ?>" placeholder="যেমন: 18">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="male_teachers">
+                        Male (পুরুষ)
+                    </label>
+                    <input class="bd-input" id="male_teachers" name="male_teachers"
+                           type="number" inputmode="numeric" min="0"
+                           value="<?= $o('male_teachers') ?>" placeholder="পুরুষ শিক্ষক">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="female_teachers">
+                        Female (মহিলা)
+                    </label>
+                    <input class="bd-input" id="female_teachers" name="female_teachers"
+                           type="number" inputmode="numeric" min="0"
+                           value="<?= $o('female_teachers') ?>" placeholder="মহিলা শিক্ষক">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="trained_teachers">
+                        Trained (প্রশিক্ষণপ্রাপ্ত)
+                    </label>
+                    <input class="bd-input" id="trained_teachers" name="trained_teachers"
+                           type="number" inputmode="numeric" min="0"
+                           value="<?= $o('trained_teachers') ?>" placeholder="প্রশিক্ষণপ্রাপ্ত">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="untrained_teachers">
+                        Untrained (প্রশিক্ষণবিহীন)
+                    </label>
+                    <input class="bd-input" id="untrained_teachers" name="untrained_teachers"
+                           type="number" inputmode="numeric" min="0"
+                           value="<?= $o('untrained_teachers') ?>" placeholder="প্রশিক্ষণবিহীন">
                 </div>
             </div>
 
-            <div class="bd-section" style="margin-top:18px;">
-                <span class="bd-section-icon" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2l2.5 6.5L21 9l-5 4 1.5 7L12 16l-5.5 4L8 13 3 9l6.5-.5z"/>
-                    </svg>
-                </span>
-                <span class="bd-section-title">
-                    Vision &amp; notes <small lang="bn">আপনার লক্ষ্য</small>
-                </span>
+            <div class="bd-step-nav">
+                <button type="button" class="bd-btn bd-btn--ghost" data-bd-prev="3">
+                    <span class="bd-btn-arrow" aria-hidden="true">&#8592;</span>
+                    Back &nbsp;&middot;&nbsp; পূর্ববর্তী
+                </button>
+                <button type="button" class="bd-btn" data-bd-next="5">
+                    পরবর্তী &nbsp;&middot;&nbsp; Next
+                    <span class="bd-btn-arrow" aria-hidden="true">&#8594;</span>
+                </button>
             </div>
+        </section>
 
-            <div class="bd-field" style="margin-top:12px;">
-                <label class="bd-label" for="smart_school_reason">
-                    Why do you want to make your school smart?
-                    <small lang="bn">(স্কুলকে স্মার্ট করতে চান কেন?)</small>
-                    <span class="req">*</span>
-                </label>
-                <textarea class="bd-input" id="smart_school_reason" name="smart_school_reason"
-                          minlength="20" maxlength="2000" required
-                          placeholder="আপনার লক্ষ্য, প্রত্যাশা এবং স্মার্ট স্কুল প্রোগ্রামের প্রতি আগ্রহের কারণ সংক্ষেপে বর্ণনা করুন..."
-                          ><?= $o('smart_school_reason') ?></textarea>
-                <small class="bd-hint">কমপক্ষে ২০ অক্ষর, সর্বোচ্চ ২০০০ অক্ষর।</small>
-            </div>
+        <!-- ============ Step 5 - Technology & Vision ============ -->
+        <section class="bd-step" data-bd-step="5">
+            <p class="bd-step-helper" lang="bn">প্রযুক্তি ও ভবিষ্যৎ লক্ষ্য সম্পর্কিত তথ্য</p>
 
-            <div class="bd-field" style="margin-top:12px;">
-                <label class="bd-label" for="notes">
-                    Anything else? <small style="opacity:.7">(optional)</small>
-                </label>
-                <textarea class="bd-input" id="notes" name="notes" maxlength="2000" rows="2"
-                          placeholder="যেমন: ৩৫০ জন শিক্ষার্থী, দুটি ক্যাম্পাস, অভিভাবক SMS দরকার..."
-                          ><?= $o('notes') ?></textarea>
+            <div class="bd-grid">
+                <div class="bd-section">
+                    <span class="bd-section-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                            <line x1="8" y1="21" x2="16" y2="21"/>
+                            <line x1="12" y1="17" x2="12" y2="21"/>
+                        </svg>
+                    </span>
+                    <span class="bd-section-title">
+                        Technology
+                        <small lang="bn">প্রযুক্তি</small>
+                    </span>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="num_computers">
+                        Number of Computers (কম্পিউটার সংখ্যা)
+                    </label>
+                    <input class="bd-input" id="num_computers" name="num_computers"
+                           type="number" inputmode="numeric" min="0"
+                           value="<?= $o('num_computers') ?>" placeholder="যেমন: 10">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="num_projectors">
+                        Projectors (প্রজেক্টর সংখ্যা)
+                    </label>
+                    <input class="bd-input" id="num_projectors" name="num_projectors"
+                           type="number" inputmode="numeric" min="0"
+                           value="<?= $o('num_projectors') ?>" placeholder="যেমন: 2">
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" id="lbl-has-internet">
+                        Internet Connection (ইন্টারনেট সংযোগ) <span class="req">*</span>
+                    </label>
+                    <div role="radiogroup" aria-labelledby="lbl-has-internet" class="bd-pills">
+                        <?php $hasNet = (string) ($old['has_internet'] ?? ''); ?>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_internet" value="yes" required <?= $hasNet === 'yes' ? 'checked' : '' ?>>
+                            <span>হ্যাঁ (Yes)</span>
+                        </label>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_internet" value="no" <?= $hasNet === 'no' ? 'checked' : '' ?>>
+                            <span>না (No)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" for="internet_type">
+                        Internet Type (ইন্টারনেটের ধরন)
+                    </label>
+                    <select class="bd-select" id="internet_type" name="internet_type">
+                        <option value="">-- নির্বাচন করুন --</option>
+                        <?php
+                        $netTypes = ['broadband' => 'ব্রডব্যান্ড (Broadband)', 'mobile_data' => 'মোবাইল ডাটা (Mobile Data)', 'fiber' => 'ফাইবার (Fiber)', 'none' => 'নেই (None)'];
+                        $selNet = (string) ($old['internet_type'] ?? '');
+                        foreach ($netTypes as $nCode => $nLabel): ?>
+                            <option value="<?= e($nCode) ?>" <?= $selNet === $nCode ? 'selected' : '' ?>><?= e($nLabel) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" id="lbl-multimedia">
+                        Multimedia Classroom (মাল্টিমিডিয়া ক্লাসরুম)
+                    </label>
+                    <div role="radiogroup" aria-labelledby="lbl-multimedia" class="bd-pills">
+                        <?php $mm = (string) ($old['has_multimedia_classroom'] ?? ''); ?>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_multimedia_classroom" value="yes" <?= $mm === 'yes' ? 'checked' : '' ?>>
+                            <span>হ্যাঁ (Yes)</span>
+                        </label>
+                        <label class="bd-pill">
+                            <input type="radio" name="has_multimedia_classroom" value="no" <?= $mm === 'no' ? 'checked' : '' ?>>
+                            <span>না (No)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bd-field">
+                    <label class="bd-label" id="lbl-ict-teacher">
+                        ICT Teacher Available (আইসিটি শিক্ষক আছেন কি?) <span class="req">*</span>
+                    </label>
+                    <div role="radiogroup" aria-labelledby="lbl-ict-teacher" class="bd-pills">
+                        <?php $ictPicked = (string) ($old['ict_teacher_available'] ?? ''); ?>
+                        <label class="bd-pill">
+                            <input type="radio" name="ict_teacher_available" value="yes" required <?= $ictPicked === 'yes' ? 'checked' : '' ?>>
+                            <span>হ্যাঁ আছেন (Yes)</span>
+                        </label>
+                        <label class="bd-pill">
+                            <input type="radio" name="ict_teacher_available" value="no" <?= $ictPicked === 'no' ? 'checked' : '' ?>>
+                            <span>না, নেই (No)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bd-field bd-field--span-2">
+                    <label class="bd-label" for="existing_software">
+                        Existing Software (ব্যবহৃত সফটওয়্যার)
+                    </label>
+                    <textarea class="bd-input" id="existing_software" name="existing_software"
+                              rows="2" maxlength="1000"
+                              placeholder="বর্তমানে কোন সফটওয়্যার ব্যবহার করছেন (যেমন: MS Office, Google Classroom)"><?= $o('existing_software') ?></textarea>
+                </div>
+
+                <div class="bd-section bd-section--green bd-section--standalone">
+                    <span class="bd-section-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>
+                        </svg>
+                    </span>
+                    <span class="bd-section-title">
+                        Website Domain
+                        <small lang="bn">আপনার ওয়েবসাইটের ঠিকানা</small>
+                    </span>
+                </div>
+
+                <div class="bd-field bd-field--span-2" style="margin-top:10px;">
+                    <label class="bd-label" for="subdomain">
+                        Short name / prefix for your website domain <span class="req">*</span>
+                    </label>
+                    <div class="bd-subdomain">
+                        <span class="bd-fix">www.</span>
+                        <input id="subdomain" name="subdomain" required
+                               pattern="[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])"
+                               minlength="3" maxlength="32"
+                               value="<?= $o('subdomain') ?>" placeholder="example: mghs"
+                               autocapitalize="off" autocomplete="off" spellcheck="false"
+                               data-bd-subdomain>
+                        <span class="bd-fix bd-fix--suffix">.smartschool.bd</span>
+                    </div>
+                    <small class="bd-hint">
+                        Lowercase letters, digits and hyphens. 3-32 characters. No spaces.
+                    </small>
+                    <div class="bd-domain-preview bd-domain-preview--empty" data-bd-preview>
+                        <span lang="bn">আপনার ওয়েবসাইট হবে :</span>
+                        <span class="bd-domain-preview-url" data-bd-preview-url>your-name.smartschool.bd</span>
+                    </div>
+                </div>
+
+                <div class="bd-section bd-section--amber bd-section--standalone">
+                    <span class="bd-section-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2l2.5 6.5L21 9l-5 4 1.5 7L12 16l-5.5 4L8 13 3 9l6.5-.5z"/>
+                        </svg>
+                    </span>
+                    <span class="bd-section-title">
+                        Vision &amp; Notes
+                        <small lang="bn">আপনার লক্ষ্য</small>
+                    </span>
+                </div>
+
+                <div class="bd-field bd-field--span-2" style="margin-top:10px;">
+                    <label class="bd-label" for="smart_school_reason">
+                        Why do you want to make your school smart? (স্কুলকে স্মার্ট করতে চান কেন?) <span class="req">*</span>
+                    </label>
+                    <textarea class="bd-input" id="smart_school_reason" name="smart_school_reason"
+                              minlength="20" maxlength="2000" required
+                              placeholder="আপনার লক্ষ্য, প্রত্যাশা এবং স্মার্ট স্কুল প্রোগ্রামের প্রতি আগ্রহের কারণ সংক্ষেপে বর্ণনা করুন..."><?= $o('smart_school_reason') ?></textarea>
+                    <small class="bd-hint">কমপক্ষে ২০ অক্ষর, সর্বোচ্চ ২০০০ অক্ষর।</small>
+                </div>
+
+                <div class="bd-field bd-field--span-2">
+                    <label class="bd-label" for="notes">
+                        Anything else? (অন্য কিছু?) <small style="opacity:.7">(optional)</small>
+                    </label>
+                    <textarea class="bd-input" id="notes" name="notes" maxlength="2000" rows="2"
+                              placeholder="যেমন: ৩৫০ জন শিক্ষার্থী, দুটি ক্যাম্পাস, অভিভাবক SMS দরকার..."><?= $o('notes') ?></textarea>
+                </div>
             </div>
 
             <label class="bd-check" for="final-check">
@@ -617,24 +1110,24 @@ $o = function (string $key, string $default = '') use ($old): string {
                     প্রদানকৃত সকল তথ্য সত্য এবং আমি পাইলট প্রোগ্রামের যাচাইকরণ প্রক্রিয়ার সাথে একমত।
                     আমি
                     <a href="<?= e(url('/terms.php')) ?>" target="_blank" rel="noopener">
-                        শর্তাবলী &nbsp;·&nbsp; Terms of Service
+                        শর্তাবলী &middot; Terms of Service
                     </a>
                     এবং
                     <a href="<?= e(url('/privacy.php')) ?>" target="_blank" rel="noopener">
-                        প্রাইভেসি পলিসি &nbsp;·&nbsp; Privacy Policy
+                        প্রাইভেসি পলিসি &middot; Privacy Policy
                     </a>
                     মেনে নিচ্ছি।
                 </span>
             </label>
 
             <div class="bd-step-nav">
-                <button type="button" class="bd-btn bd-btn--ghost" data-bd-prev="2">
-                    <span class="bd-btn-arrow" aria-hidden="true">←</span>
-                    Back &nbsp;·&nbsp; পূর্ববর্তী
+                <button type="button" class="bd-btn bd-btn--ghost" data-bd-prev="4">
+                    <span class="bd-btn-arrow" aria-hidden="true">&#8592;</span>
+                    Back &nbsp;&middot;&nbsp; পূর্ববর্তী
                 </button>
                 <button type="submit" class="bd-btn">
-                    সাবমিট করুন &nbsp;·&nbsp; Submit signup
-                    <span class="bd-btn-arrow" aria-hidden="true">→</span>
+                    সাবমিট করুন &nbsp;&middot;&nbsp; Submit signup
+                    <span class="bd-btn-arrow" aria-hidden="true">&#8594;</span>
                 </button>
             </div>
         </section>
@@ -649,7 +1142,7 @@ $o = function (string $key, string $default = '') use ($old): string {
 (function () {
     'use strict';
 
-    /* ============ 3-step wizard navigation ============ */
+    /* ============ 5-step wizard navigation ============ */
     var stepEls    = document.querySelectorAll('[data-bd-step]');
     var indicators = document.querySelectorAll('[data-bd-step-indicator]');
 
@@ -715,16 +1208,23 @@ $o = function (string $key, string $default = '') use ($old): string {
         });
     });
 
-    /* ============ Maheshkhali union list (no AJAX backend) ============ */
+    /* ============ Maheshkhali union list ============ */
     document.addEventListener('DOMContentLoaded', function () {
         var unions = [
-            'মহেশখালী পৌরসভা', 'বড় মহেশখালী', 'ছোট মহেশখালী', 'কুতুবজোম',
-            'শাপলাপুর', 'হোয়ানক', 'কালারমারছড়া', 'মাতারবাড়ী', 'ধলঘাটা'
+            '\u09ae\u09b9\u09c7\u09b6\u0996\u09be\u09b2\u09c0 \u09aa\u09cc\u09b0\u09b8\u09ad\u09be',
+            '\u09ac\u09dc \u09ae\u09b9\u09c7\u09b6\u0996\u09be\u09b2\u09c0',
+            '\u099b\u09cb\u099f \u09ae\u09b9\u09c7\u09b6\u0996\u09be\u09b2\u09c0',
+            '\u0995\u09c1\u09a4\u09c1\u09ac\u099c\u09cb\u09ae',
+            '\u09b6\u09be\u09aa\u09b2\u09be\u09aa\u09c1\u09b0',
+            '\u09b9\u09cb\u09df\u09be\u09a8\u0995',
+            '\u0995\u09be\u09b2\u09be\u09b0\u09ae\u09be\u09b0\u099b\u09dc\u09be',
+            '\u09ae\u09be\u09a4\u09be\u09b0\u09ac\u09be\u09dc\u09c0',
+            '\u09a7\u09b2\u0998\u09be\u099f\u09be'
         ];
         var sel = document.getElementById('union-selector');
         if (!sel) return;
         var prev = sel.getAttribute('data-prev') || '';
-        sel.innerHTML = '<option value="">— Select union —</option>';
+        sel.innerHTML = '<option value="">-- \u0987\u0989\u09a8\u09bf\u09df\u09a8 \u09a8\u09bf\u09b0\u09cd\u09ac\u09be\u099a\u09a8 \u0995\u09b0\u09c1\u09a8 --</option>';
         unions.forEach(function (u) {
             var opt = document.createElement('option');
             opt.value = u;
@@ -732,19 +1232,27 @@ $o = function (string $key, string $default = '') use ($old): string {
             if (prev === u) { opt.selected = true; }
             sel.appendChild(opt);
         });
+        // Sync union_ward hidden field
+        sel.addEventListener('change', function () {
+            document.getElementById('union_ward').value = sel.value;
+        });
+        // Set initial value if pre-selected
+        if (sel.value) {
+            document.getElementById('union_ward').value = sel.value;
+        }
     });
 
     /* ============ Geolocation API ============ */
     window.fetchCoordinates = function () {
         if (!navigator.geolocation) {
-            alert('আপনার ব্রাউজারটি জিপিএস ট্র্যাকিং সাপোর্ট করে না।');
+            alert('\u0986\u09aa\u09a8\u09be\u09b0 \u09ac\u09cd\u09b0\u09be\u0989\u099c\u09be\u09b0\u099f\u09bf \u099c\u09bf\u09aa\u09bf\u098f\u09b8 \u099f\u09cd\u09b0\u09cd\u09af\u09be\u0995\u09bf\u0982 \u09b8\u09be\u09aa\u09cb\u09b0\u09cd\u099f \u0995\u09b0\u09c7 \u09a8\u09be\u0964');
             return;
         }
         navigator.geolocation.getCurrentPosition(function (position) {
             document.getElementById('geo-lat').value = position.coords.latitude.toFixed(6);
             document.getElementById('geo-lng').value = position.coords.longitude.toFixed(6);
         }, function () {
-            alert('জিপিএস লোকেশন অ্যাক্সেস করা সম্ভব হয়নি। অনুগ্রহ করে ব্রাউজার পারমিশন চেক করুন।');
+            alert('\u099c\u09bf\u09aa\u09bf\u098f\u09b8 \u09b2\u09cb\u0995\u09c7\u09b6\u09a8 \u0985\u09cd\u09af\u09be\u0995\u09cd\u09b8\u09c7\u09b8 \u0995\u09b0\u09be \u09b8\u09ae\u09cd\u09ad\u09ac \u09b9\u09df\u09a8\u09bf\u0964 \u0985\u09a8\u09c1\u0997\u09cd\u09b0\u09b9 \u0995\u09b0\u09c7 \u09ac\u09cd\u09b0\u09be\u0989\u099c\u09be\u09b0 \u09aa\u09be\u09b0\u09ae\u09bf\u09b6\u09a8 \u099a\u09c7\u0995 \u0995\u09b0\u09c1\u09a8\u0964');
         });
     };
 
@@ -771,22 +1279,26 @@ $o = function (string $key, string $default = '') use ($old): string {
     <?php if (!empty($errors)): ?>
     document.addEventListener('DOMContentLoaded', function () {
         var step1 = ['owner_name', 'owner_phone', 'owner_email'];
-        var step2 = ['institution_type', 'school_name', 'union_name',
-                     'detailed_address', 'total_students', 'total_teachers'];
+        var step2 = ['institution_type', 'school_name', 'mpo_status'];
+        var step3 = ['union_name', 'detailed_address'];
+        var step4 = ['total_students', 'total_teachers'];
+        var step5 = ['subdomain', 'smart_school_reason'];
+
         var hasMissing = function (names) {
             return names.some(function (n) {
                 var el = document.querySelector('[name="' + n + '"]');
                 return el && !String(el.value || '').trim();
             });
         };
-        var ictMissing = !document.querySelector('input[name="ict_teacher_available"]:checked');
-        var step3Missing =
-                !String(document.querySelector('[name="smart_school_reason"]').value || '').trim()
-             || !document.querySelector('[name="terms_accept"]').checked;
+        var radioMissing = function (name) {
+            return !document.querySelector('input[name="' + name + '"]:checked');
+        };
 
-        if (hasMissing(step1))                            { activateStep(1); }
-        else if (hasMissing(step2) || ictMissing)         { activateStep(2); }
-        else if (step3Missing)                            { activateStep(3); }
+        if (hasMissing(step1)) { activateStep(1); }
+        else if (hasMissing(step2)) { activateStep(2); }
+        else if (hasMissing(step3)) { activateStep(3); }
+        else if (hasMissing(step4)) { activateStep(4); }
+        else if (hasMissing(step5) || radioMissing('has_internet') || radioMissing('ict_teacher_available') || !document.querySelector('[name="terms_accept"]').checked) { activateStep(5); }
     });
     <?php endif; ?>
 })();
